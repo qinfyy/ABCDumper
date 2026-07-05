@@ -97,6 +97,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="DumpCs2.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Il2CppFunctions.h" />
     <ClInclude Include="il2cpp\il2cpp-api-functions.h" />
@@ -110,6 +111,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="DumpCs2.cpp" />
     <ClCompile Include="Il2CppFunctions.cpp" />
     <ClCompile Include="Initializer.cpp" />
     <ClCompile Include="pch.cpp">

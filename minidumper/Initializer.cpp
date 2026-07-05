@@ -7,6 +7,7 @@
 #include <exception>
 #include <stdexcept>
 #include <DbgHelp.h>
+#include "DumpCs2.h"
 
 namespace
 {
@@ -46,7 +47,7 @@ DWORD WINAPI MainThread(LPVOID parameter)
 {
     SetUnhandledExceptionFilter(GlobalExceptionFilter);
 
-    DebugPrintA("[INFO] 等待 GameAssembly.dll ...\n");
+    DebugPrintA("[INFO] Waiting for GameAssembly.dll ...\n");
 
     uintptr_t base = 0;
     while (!(base = GetGameAssemblyModuleBase())) {
@@ -60,6 +61,8 @@ DWORD WINAPI MainThread(LPVOID parameter)
        Sleep(1000);
     }
 
+    DebugPrintA("\n[INFO] Start il2cpp dump!\n");
+
     try {
         InitIl2CppFunctions();
 
@@ -69,6 +72,8 @@ DWORD WINAPI MainThread(LPVOID parameter)
         }
 
         auto* thread = il2cpp_thread_attach(domain);
+
+		DumpCs2(".\\output\\dump.cs2");
     }
     catch (const std::exception& e) {
         DebugPrintA("[FATAL] 初始化异常: %s\n", e.what());

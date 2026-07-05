@@ -6,8 +6,8 @@
 #include "X64Emulator.h"
 
 #include <array>
+#include <cstring>
 #include <sstream>
-#include <string_view>
 #include <unordered_map>
 #include <vector>
 #include "Util.h"
@@ -37,12 +37,36 @@ namespace
     constexpr ApiBinding kApiBindings[] = {
         { "il2cpp_domain_get", 841 },
         { "il2cpp_thread_attach", 1100 },
+        { "il2cpp_domain_get_assemblies", 1083 },
+        { "il2cpp_assembly_get_image", 975 },
+        { "il2cpp_image_get_name", 548 },
+        { "il2cpp_image_get_class_count", 659 },
+        { "il2cpp_image_get_class", 673 },
+        { "il2cpp_class_get_fields", 837 },
+        { "il2cpp_class_get_methods", 520 },
+        { "il2cpp_class_get_name", 1162 },
+        { "il2cpp_class_get_namespace", 354 },
+        { "il2cpp_class_get_parent", 877 },
+        { "il2cpp_field_get_flags", 1184 },
+        { "il2cpp_field_get_name", 1031 },
+        { "il2cpp_field_get_offset", 901 },
+        { "il2cpp_field_get_type", 247 },
+        { "il2cpp_method_get_return_type", 142 },
+        { "il2cpp_method_get_name", 63 },
+        { "il2cpp_method_get_param_count", 866 },
+        { "il2cpp_method_get_param", 822 },
+        { "il2cpp_type_get_name", 261 },
     };
 
     bool IsRequiredIl2CppApi(const char* apiName)
     {
-		// TODO
-        return std::string_view(apiName) == "il2cpp_domain_get" || std::string_view(apiName) == "il2cpp_thread_attach";
+        for (const auto& binding : kApiBindings) {
+            if (strcmp(binding.name, apiName) == 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     uintptr_t GetCaseStart(uintptr_t unityBase, uint32_t caseIndex)
@@ -182,7 +206,7 @@ void InitIl2CppFunctions()
         }
     }
 
-    DebugPrintA("[minidump] IL2CPP API 绑定完成: selected=%zu\n", decodedApis.size());
+    DebugPrintA("[INFO] IL2CPP API Binding completed: selected=%zu\n", decodedApis.size());
 
     if (!failedRequiredApis.empty()) {
         std::wstringstream ss;
