@@ -77,7 +77,7 @@ DWORD WINAPI MainThread(LPVOID parameter)
     }
     catch (const std::exception& e) {
         DebugPrintA("[FATAL] 初始化异常: %s\n", e.what());
-        MessageBoxA(nullptr, e.what(), "minidumper 初始化异常", MB_OK | MB_ICONERROR);
+        MessageBoxA(nullptr, e.what(), "MiniDumper 初始化异常", MB_OK | MB_ICONERROR);
     }
 
     return 0;

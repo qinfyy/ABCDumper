@@ -16,7 +16,7 @@
     <ProjectGuid>{90e9ec72-9214-418a-9686-1bafc6490b1e}</ProjectGuid>
     <RootNamespace>sapi</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>minidumper</ProjectName>
+    <ProjectName>MiniDumper</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
