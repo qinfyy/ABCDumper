@@ -24,7 +24,7 @@ namespace
     constexpr ApiBinding kApiBindings[] = {
         { "il2cpp_assembly_get_image", 24 },
         { "il2cpp_class_get_interfaces", 39 },
-        { "il2cpp_class_get_fields", 40 },
+        { "il2cpp_class_get_fields", 37 },
         { "il2cpp_class_get_methods", 43 },
         { "il2cpp_class_get_name", 46 },
         { "il2cpp_class_get_namespace", 48 },

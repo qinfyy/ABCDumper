@@ -12,6 +12,7 @@
 #include <vector>
 #include <algorithm>
 #include <cstring>
+#include <cstdio>
 #include "il2cpp/il2cpp-tabledefs.h"
 
 struct MethodInfo
@@ -33,11 +34,13 @@ namespace
     constexpr size_t kInternalAssemblyStride = 0x18;
     constexpr size_t kMaxImageClassCount = 200000;
     constexpr size_t kMaxMemberCount = 200000;
-    constexpr size_t kClassFieldsOffset = 0x78;
-    constexpr size_t kClassFieldCountOffset = 0x11C;
-    constexpr size_t kFieldInfoSize = 0x28;
+    constexpr size_t kClassFieldsOffset = 0x80;
+    constexpr size_t kClassFieldCountOffset = 0x114;
+    constexpr size_t kFieldInfoSize = 0x20;
     constexpr uintptr_t kProtectedMetadataBaseGlobalRva = 0x20896B8;
     constexpr uintptr_t kProtectedFieldMetadataOffset = 0x538398;
+    constexpr uint32_t kFieldMetadataStartXor = 0x2EE556B4;
+    constexpr uintptr_t kFieldNameTokenXor = 0x475139FE2D91A4FF;
     constexpr uint32_t kFieldMetadataIndexAdd = 0xB1F1C1BA;
     constexpr uint32_t kFieldMetadataOffsetXor = 0x03AE7562;
     constexpr uintptr_t kFieldTypeMethodXor = 0x695367855EBB9ED9;
@@ -770,8 +773,8 @@ namespace
         }
         if (IsReadablePointer(reinterpret_cast<const void*>(klassAddress + 0xA8), sizeof(uintptr_t))) {
             const auto classMetadata = *reinterpret_cast<const uintptr_t*>(klassAddress + 0xA8);
-            if (IsReadablePointer(reinterpret_cast<const void*>(classMetadata + 0x24), sizeof(uint32_t))) {
-                metadataFieldStart = *reinterpret_cast<const uint32_t*>(classMetadata + 0x24);
+            if (IsReadablePointer(reinterpret_cast<const void*>(classMetadata + 0x44), sizeof(uint32_t))) {
+                metadataFieldStart = *reinterpret_cast<const uint32_t*>(classMetadata + 0x44) ^ kFieldMetadataStartXor;
             }
         }
         const auto debugThisFieldClass = className == "AE0FD514C666379D" || className == "B3EA6C947BC9BE58" || className == "F77E4216CB1B3312";
@@ -786,15 +789,6 @@ namespace
         std::vector<FieldDumpRecord> fieldRecords;
         fieldRecords.reserve(fieldCount);
 
-        uint32_t actualSize = kIl2CppObjectHeaderSize;
-        auto* parentClass = TryGetClassParent(klass);
-        if (parentClass) {
-            const auto parentInstanceSize = TryGetClassInstanceSize(parentClass);
-            if (parentInstanceSize > 0) {
-                actualSize = static_cast<uint32_t>(parentInstanceSize);
-            }
-        }
-
         for (uint16_t i = 0; i < fieldCount; ++i) {
             const auto field = fields + static_cast<uintptr_t>(i) * kFieldInfoSize;
             auto* fieldInfo = reinterpret_cast<FieldInfo*>(field);
@@ -802,9 +796,37 @@ namespace
             const auto* fieldType = TryGetFieldType(fieldInfo);
             const auto typeReadable = fieldType && IsReadablePointer(fieldType);
             const auto fieldTypeName = typeReadable ? GetTypeName(fieldType) : std::string("UnknownType");
+            std::string fieldNameText = SafeString(fieldName, "");
+            auto fieldNamePrintable = !fieldNameText.empty();
+            for (const auto ch : fieldNameText) {
+                const auto byte = static_cast<unsigned char>(ch);
+                if (byte < 0x20 || byte > 0x7E) {
+                    fieldNamePrintable = false;
+                    break;
+                }
+            }
+
+            uint64_t rawNameToken = 0;
+            uint64_t decodedNameToken = 0;
+            if (!fieldNamePrintable && protectedMetadataBase && metadataFieldStart != 0) {
+                const auto nameTokenAddress = protectedMetadataBase + 12ull * (static_cast<uint64_t>(metadataFieldStart) + i) + 12;
+                if (IsReadablePointer(reinterpret_cast<const void*>(nameTokenAddress), sizeof(uint64_t))) {
+                    rawNameToken = *reinterpret_cast<const uint64_t*>(nameTokenAddress);
+                    decodedNameToken = rawNameToken ^ kFieldNameTokenXor;
+                    char fallbackName[32]{};
+                    sprintf_s(fallbackName, "%016llX", static_cast<unsigned long long>(decodedNameToken));
+                    fieldNameText = fallbackName;
+                    fieldNamePrintable = true;
+                }
+            }
+
+            if (!fieldNamePrintable) {
+                fieldNameText = "unknownField";
+            }
+
             const auto fieldFlags = GetFieldFlags(fieldInfo);
             auto fieldOffset = 0u;
-            const auto offsetData = *reinterpret_cast<const uint32_t*>(field + 0x20);
+            const auto offsetData = *reinterpret_cast<const uint32_t*>(field + 0x18);
             const auto apiOffset = TryGetFieldOffset(fieldInfo);
             auto sizeAndAlignment = SizeAndAlignment{ static_cast<uint32_t>(sizeof(void*)), static_cast<uint32_t>(sizeof(void*)) };
             auto typeKind = -1;
@@ -813,31 +835,24 @@ namespace
                 typeKind = TryGetTypeKind(fieldType);
             }
 
-            if ((fieldFlags & FIELD_ATTRIBUTE_STATIC) == 0) {
-                const auto alignment = sizeAndAlignment.alignment == 0 ? 1u : sizeAndAlignment.alignment;
-                fieldOffset = actualSize;
-                if ((fieldOffset & (alignment - 1)) != 0) {
-                    fieldOffset += alignment - 1;
-                    fieldOffset &= ~(alignment - 1);
-                }
-
-                actualSize = (std::max)(actualSize, fieldOffset + (std::max)(sizeAndAlignment.size, 1u));
+            if (apiOffset <= 0xFFFFFFFFu) {
+                fieldOffset = static_cast<uint32_t>(apiOffset);
             }
 
-            DebugPrintA("[DumpCs2] 字段 offset: klass=%p class=%s index=%u field=%p name=%s type=%s typePtr=%p typeReadable=%d flags=0x%X finalOffset=0x%X apiOffset=0x%llX raw20=%08X typeKind=0x%X size=%u align=%u actualSize=0x%X\n", klass, className.c_str(), i, reinterpret_cast<const void*>(field), SafeString(fieldName, "unknownField"), fieldTypeName.c_str(), fieldType, typeReadable ? 1 : 0, fieldFlags, fieldOffset, static_cast<unsigned long long>(apiOffset), offsetData, typeKind, sizeAndAlignment.size, sizeAndAlignment.alignment, actualSize);
+            DebugPrintA("[DumpCs2] 字段 offset: klass=%p class=%s index=%u field=%p name=%s type=%s typePtr=%p typeName=%s typeReadable=%d flags=0x%X finalOffset=0x%X apiOffset=0x%llX rawOffset=%08X rawNameToken=%016llX decodedNameToken=%016llX typeKind=0x%X size=%u align=%u\n", klass, className.c_str(), i, reinterpret_cast<const void*>(field), fieldNameText.c_str(), fieldTypeName.c_str(), fieldType, fieldTypeName.c_str(), typeReadable ? 1 : 0, fieldFlags, fieldOffset, static_cast<unsigned long long>(apiOffset), offsetData, static_cast<unsigned long long>(rawNameToken), static_cast<unsigned long long>(decodedNameToken), typeKind, sizeAndAlignment.size, sizeAndAlignment.alignment);
 
             if (debugFieldSamples < kDebugFieldSampleCount || debugThisFieldClass) {
                 const auto raw0 = *reinterpret_cast<const uintptr_t*>(field);
                 const auto raw8 = *reinterpret_cast<const uintptr_t*>(field + 0x8);
                 const auto raw10 = *reinterpret_cast<const uintptr_t*>(field + 0x10);
                 const auto raw18 = *reinterpret_cast<const uintptr_t*>(field + 0x18);
-                DebugPrintA("[DumpCs2] 字段样本[%zu]: klass=%p class=%s index=%u field=%p name=%s type=%s typePtr=%p typeReadable=%d flags=0x%X layoutOffset=0x%X apiOffset=0x%llX raw0=%016llX raw8=%016llX raw10=%016llX raw18=%016llX raw20=%08X typeKind=0x%X size=%u align=%u actualSize=0x%X\n", debugFieldSamples, klass, className.c_str(), i, reinterpret_cast<const void*>(field), SafeString(fieldName, "unknownField"), fieldTypeName.c_str(), fieldType, typeReadable ? 1 : 0, fieldFlags, fieldOffset, static_cast<unsigned long long>(apiOffset), static_cast<unsigned long long>(raw0), static_cast<unsigned long long>(raw8), static_cast<unsigned long long>(raw10), static_cast<unsigned long long>(raw18), offsetData, typeKind, sizeAndAlignment.size, sizeAndAlignment.alignment, actualSize);
+                DebugPrintA("[DumpCs2] 字段样本[%zu]: klass=%p class=%s index=%u field=%p name=%s type=%s typePtr=%p typeReadable=%d flags=0x%X finalOffset=0x%X apiOffset=0x%llX raw0=%016llX raw8=%016llX raw10=%016llX raw18=%016llX rawOffset=%08X rawNameToken=%016llX decodedNameToken=%016llX typeKind=0x%X size=%u align=%u\n", debugFieldSamples, klass, className.c_str(), i, reinterpret_cast<const void*>(field), fieldNameText.c_str(), fieldTypeName.c_str(), fieldType, typeReadable ? 1 : 0, fieldFlags, fieldOffset, static_cast<unsigned long long>(apiOffset), static_cast<unsigned long long>(raw0), static_cast<unsigned long long>(raw8), static_cast<unsigned long long>(raw10), static_cast<unsigned long long>(raw18), offsetData, static_cast<unsigned long long>(rawNameToken), static_cast<unsigned long long>(decodedNameToken), typeKind, sizeAndAlignment.size, sizeAndAlignment.alignment);
                 if (debugFieldSamples < kDebugFieldSampleCount) {
                     ++debugFieldSamples;
                 }
             }
 
-            fieldRecords.push_back({ fieldTypeName, SafeString(fieldName, "unknownField"), fieldOffset });
+            fieldRecords.push_back({ fieldTypeName, fieldNameText, fieldOffset });
         }
 
         for (const auto& fieldRecord : fieldRecords) {
