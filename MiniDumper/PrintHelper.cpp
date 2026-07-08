@@ -37,14 +37,14 @@ void DebugPrintVA(const char* fmt, va_list args)
     if (len <= 0) return;
 
     char stackBuf[MAX_BUFFER_SIZE];
-    char* buf = (len <= MAX_BUFFER_SIZE) ? stackBuf : (char*)malloc(len + 1);
+    char* buf = (len < MAX_BUFFER_SIZE) ? stackBuf : (char*)malloc(len + 1);
     if (!buf) return;
 
     vsprintf_s(buf, len + 1, fmt, args);
 
     printf("%s", buf);
 
-    if (len > MAX_BUFFER_SIZE)
+    if (len >= MAX_BUFFER_SIZE)
         free(buf);
 
     fflush(stdout);
@@ -61,14 +61,14 @@ void DebugPrintVW(const wchar_t* fmt, va_list args)
     if (len <= 0) return;
 
     wchar_t stackBuf[MAX_BUFFER_SIZE];
-    wchar_t* buf = (len <= MAX_BUFFER_SIZE) ? stackBuf : (wchar_t*)malloc((len + 1) * sizeof(wchar_t));
+    wchar_t* buf = (len < MAX_BUFFER_SIZE) ? stackBuf : (wchar_t*)malloc((len + 1) * sizeof(wchar_t));
     if (!buf) return;
 
     vswprintf_s(buf, len + 1, fmt, args);
 
     wprintf(L"%ls", buf);
 
-    if (len > MAX_BUFFER_SIZE)
+    if (len >= MAX_BUFFER_SIZE)
         free(buf);
 
     fflush(stdout);
