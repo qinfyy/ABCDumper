@@ -11,6 +11,7 @@
 #include <unordered_set>
 #include <vector>
 #include <algorithm>
+#include <cstring>
 #include "il2cpp/il2cpp-tabledefs.h"
 
 struct MethodInfo
@@ -47,6 +48,7 @@ namespace
     constexpr size_t kNexusMethodPointerOffset = 0x28;
     constexpr size_t kNexusMethodPointerFallbackOffset = 0x20;
     constexpr size_t kDebugFieldSampleCount = 64;
+    constexpr size_t kMaxCStringLength = 0x4000;
     constexpr uint32_t kIl2CppObjectHeaderSize = 0x10;
     constexpr bool kDumpClassMembers = true;
     constexpr bool kDumpParentClass = false;
@@ -96,11 +98,45 @@ namespace
 
     const char* ValidateCString(const char* value)
     {
-        if (!value || !IsReadablePointer(value)) {
+        if (!value) {
             return nullptr;
         }
 
-        return value;
+        auto address = reinterpret_cast<uintptr_t>(value);
+        size_t checkedLength = 0;
+        while (checkedLength < kMaxCStringLength) {
+            MEMORY_BASIC_INFORMATION mbi{};
+            if (!VirtualQuery(reinterpret_cast<const void*>(address), &mbi, sizeof(mbi))) {
+                return nullptr;
+            }
+
+            if (mbi.State != MEM_COMMIT || (mbi.Protect & (PAGE_NOACCESS | PAGE_GUARD)) != 0) {
+                return nullptr;
+            }
+
+            const auto regionEnd = reinterpret_cast<uintptr_t>(mbi.BaseAddress) + mbi.RegionSize;
+            const auto chunkSize = (std::min)(regionEnd - address, kMaxCStringLength - checkedLength);
+            if (chunkSize == 0) {
+                return nullptr;
+            }
+
+            const void* terminator = nullptr;
+            __try {
+                terminator = std::memchr(reinterpret_cast<const void*>(address), '\0', chunkSize);
+            }
+            __except (EXCEPTION_EXECUTE_HANDLER) {
+                return nullptr;
+            }
+
+            if (terminator) {
+                return value;
+            }
+
+            address += chunkSize;
+            checkedLength += chunkSize;
+        }
+
+        return nullptr;
     }
 
     std::string SafeString(const char* value, const char* fallback = "")
@@ -143,6 +179,10 @@ namespace
 
     const char* TryGetTypeName(const Il2CppType* type)
     {
+        if (!type || !IsReadablePointer(type)) {
+            return nullptr;
+        }
+
         const char* name = nullptr;
         __try {
             name = il2cpp_type_get_name ? il2cpp_type_get_name(type) : nullptr;
@@ -151,11 +191,15 @@ namespace
             DebugPrintA("[DumpCs2] il2cpp_type_get_name 异常: type=%p\n", type);
         }
 
-        return name;
+        return ValidateCString(name);
     }
 
     uint32_t TryGetTypeAttrs(const Il2CppType* type)
     {
+        if (!type || !IsReadablePointer(type)) {
+            return 0;
+        }
+
         uint32_t attrs = 0;
         __try {
             attrs = il2cpp_type_get_attrs ? il2cpp_type_get_attrs(type) : 0;
@@ -169,6 +213,10 @@ namespace
 
     int TryGetTypeKind(const Il2CppType* type)
     {
+        if (!type || !IsReadablePointer(type)) {
+            return -1;
+        }
+
         int typeKind = -1;
         __try {
             typeKind = il2cpp_type_get_type ? il2cpp_type_get_type(type) : -1;
@@ -190,7 +238,7 @@ namespace
             DebugPrintA("[DumpCs2] il2cpp_class_get_name 异常: klass=%p\n", klass);
         }
 
-        return name;
+        return ValidateCString(name);
     }
 
     const char* TryGetClassNamespace(const Il2CppClass* klass)
@@ -203,7 +251,7 @@ namespace
             DebugPrintA("[DumpCs2] il2cpp_class_get_namespace 异常: klass=%p\n", klass);
         }
 
-        return namespaze;
+        return ValidateCString(namespaze);
     }
 
     uint32_t TryGetClassFlags(const Il2CppClass* klass)
@@ -273,6 +321,10 @@ namespace
 
     Il2CppClass* TryGetClassFromType(const Il2CppType* type)
     {
+        if (!type || !IsReadablePointer(type)) {
+            return nullptr;
+        }
+
         Il2CppClass* klass = nullptr;
         __try {
             klass = il2cpp_class_from_type ? il2cpp_class_from_type(type) : nullptr;
@@ -286,6 +338,10 @@ namespace
 
     bool TryIsTypeByRef(const Il2CppType* type)
     {
+        if (!type || !IsReadablePointer(type)) {
+            return false;
+        }
+
         bool isByRef = false;
         __try {
             isByRef = il2cpp_type_is_byref ? il2cpp_type_is_byref(type) : false;
@@ -333,7 +389,7 @@ namespace
             DebugPrintA("[DumpCs2] il2cpp_field_get_name 异常: field=%p\n", field);
         }
 
-        return name;
+        return ValidateCString(name);
     }
 
     const Il2CppType* TryGetFieldType(FieldInfo* field)
@@ -384,7 +440,7 @@ namespace
             DebugPrintA("[DumpCs2] il2cpp_method_get_name 异常: method=%p\n", method);
         }
 
-        return name;
+        return ValidateCString(name);
     }
 
     const Il2CppType* TryGetMethodReturnType(const MethodInfo* method)
@@ -436,7 +492,7 @@ namespace
             DebugPrintA("[DumpCs2] il2cpp_method_get_param_name 异常: method=%p index=%u\n", method, index);
         }
 
-        return name;
+        return ValidateCString(name);
     }
 
     uint32_t TryGetMethodFlags(const MethodInfo* method)
@@ -744,13 +800,18 @@ namespace
             auto* fieldInfo = reinterpret_cast<FieldInfo*>(field);
             const auto* fieldName = TryGetFieldName(fieldInfo);
             const auto* fieldType = TryGetFieldType(fieldInfo);
-            const auto fieldTypeName = GetTypeName(fieldType);
+            const auto typeReadable = fieldType && IsReadablePointer(fieldType);
+            const auto fieldTypeName = typeReadable ? GetTypeName(fieldType) : std::string("UnknownType");
             const auto fieldFlags = GetFieldFlags(fieldInfo);
             auto fieldOffset = 0u;
             const auto offsetData = *reinterpret_cast<const uint32_t*>(field + 0x20);
             const auto apiOffset = TryGetFieldOffset(fieldInfo);
-            const auto sizeAndAlignment = GetTypeSizeAndAlignment(fieldType);
-            const auto typeKind = TryGetTypeKind(fieldType);
+            auto sizeAndAlignment = SizeAndAlignment{ static_cast<uint32_t>(sizeof(void*)), static_cast<uint32_t>(sizeof(void*)) };
+            auto typeKind = -1;
+            if (typeReadable) {
+                sizeAndAlignment = GetTypeSizeAndAlignment(fieldType);
+                typeKind = TryGetTypeKind(fieldType);
+            }
 
             if ((fieldFlags & FIELD_ATTRIBUTE_STATIC) == 0) {
                 const auto alignment = sizeAndAlignment.alignment == 0 ? 1u : sizeAndAlignment.alignment;
@@ -763,14 +824,14 @@ namespace
                 actualSize = (std::max)(actualSize, fieldOffset + (std::max)(sizeAndAlignment.size, 1u));
             }
 
-            DebugPrintA("[DumpCs2] 字段 offset: klass=%p class=%s index=%u field=%p name=%s type=%s flags=0x%X finalOffset=0x%X apiOffset=0x%llX raw20=%08X typeKind=0x%X size=%u align=%u actualSize=0x%X\n", klass, className.c_str(), i, reinterpret_cast<const void*>(field), SafeString(fieldName, "unknownField"), fieldTypeName.c_str(), fieldFlags, fieldOffset, static_cast<unsigned long long>(apiOffset), offsetData, typeKind, sizeAndAlignment.size, sizeAndAlignment.alignment, actualSize);
+            DebugPrintA("[DumpCs2] 字段 offset: klass=%p class=%s index=%u field=%p name=%s type=%s typePtr=%p typeReadable=%d flags=0x%X finalOffset=0x%X apiOffset=0x%llX raw20=%08X typeKind=0x%X size=%u align=%u actualSize=0x%X\n", klass, className.c_str(), i, reinterpret_cast<const void*>(field), SafeString(fieldName, "unknownField"), fieldTypeName.c_str(), fieldType, typeReadable ? 1 : 0, fieldFlags, fieldOffset, static_cast<unsigned long long>(apiOffset), offsetData, typeKind, sizeAndAlignment.size, sizeAndAlignment.alignment, actualSize);
 
             if (debugFieldSamples < kDebugFieldSampleCount || debugThisFieldClass) {
                 const auto raw0 = *reinterpret_cast<const uintptr_t*>(field);
                 const auto raw8 = *reinterpret_cast<const uintptr_t*>(field + 0x8);
                 const auto raw10 = *reinterpret_cast<const uintptr_t*>(field + 0x10);
                 const auto raw18 = *reinterpret_cast<const uintptr_t*>(field + 0x18);
-                DebugPrintA("[DumpCs2] 字段样本[%zu]: klass=%p class=%s index=%u field=%p name=%s type=%s flags=0x%X layoutOffset=0x%X apiOffset=0x%llX raw0=%016llX raw8=%016llX raw10=%016llX raw18=%016llX raw20=%08X typeKind=0x%X size=%u align=%u actualSize=0x%X\n", debugFieldSamples, klass, className.c_str(), i, reinterpret_cast<const void*>(field), SafeString(fieldName, "unknownField"), fieldTypeName.c_str(), fieldFlags, fieldOffset, static_cast<unsigned long long>(apiOffset), static_cast<unsigned long long>(raw0), static_cast<unsigned long long>(raw8), static_cast<unsigned long long>(raw10), static_cast<unsigned long long>(raw18), offsetData, typeKind, sizeAndAlignment.size, sizeAndAlignment.alignment, actualSize);
+                DebugPrintA("[DumpCs2] 字段样本[%zu]: klass=%p class=%s index=%u field=%p name=%s type=%s typePtr=%p typeReadable=%d flags=0x%X layoutOffset=0x%X apiOffset=0x%llX raw0=%016llX raw8=%016llX raw10=%016llX raw18=%016llX raw20=%08X typeKind=0x%X size=%u align=%u actualSize=0x%X\n", debugFieldSamples, klass, className.c_str(), i, reinterpret_cast<const void*>(field), SafeString(fieldName, "unknownField"), fieldTypeName.c_str(), fieldType, typeReadable ? 1 : 0, fieldFlags, fieldOffset, static_cast<unsigned long long>(apiOffset), static_cast<unsigned long long>(raw0), static_cast<unsigned long long>(raw8), static_cast<unsigned long long>(raw10), static_cast<unsigned long long>(raw18), offsetData, typeKind, sizeAndAlignment.size, sizeAndAlignment.alignment, actualSize);
                 if (debugFieldSamples < kDebugFieldSampleCount) {
                     ++debugFieldSamples;
                 }
