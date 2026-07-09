@@ -54,6 +54,7 @@ namespace
     constexpr uint32_t kIl2CppObjectHeaderSize = 0x10;
     constexpr bool kDumpClassMembers = true;
     constexpr bool kDumpParentClass = true;
+    constexpr bool kDumpInterfaces = true;
     constexpr bool kDumpInternalAssemblyTable = false;
 
     struct SizeAndAlignment
@@ -280,6 +281,19 @@ namespace
         }
 
         return parent;
+    }
+
+    Il2CppClass* TryGetNextInterface(const Il2CppClass* klass, void** iter)
+    {
+        Il2CppClass* interfaceClass = nullptr;
+        __try {
+            interfaceClass = il2cpp_class_get_interfaces ? il2cpp_class_get_interfaces(const_cast<Il2CppClass*>(klass), iter) : nullptr;
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER) {
+            DebugPrintA("[DumpCs2] il2cpp_class_get_interfaces 异常: klass=%p iter=%p\n", klass, iter ? *iter : nullptr);
+        }
+
+        return interfaceClass;
     }
 
     int32_t TryGetClassInstanceSize(const Il2CppClass* klass)
@@ -915,10 +929,46 @@ namespace
         os << "\n";
 
         os << "class " << className;
+        std::vector<std::string> inheritedNames;
         if constexpr (kDumpParentClass) {
             const auto parentName = GetParentName(klass);
             if (!parentName.empty()) {
-                os << " : " << parentName;
+                inheritedNames.push_back(parentName);
+            }
+        }
+
+        if constexpr (kDumpInterfaces) {
+            if (il2cpp_class_get_interfaces) {
+                size_t interfaceIndex = 0;
+                void* iter = nullptr;
+                while (interfaceIndex++ < kMaxMemberCount) {
+                    const auto* interfaceClass = TryGetNextInterface(klass, &iter);
+                    if (!interfaceClass) {
+                        break;
+                    }
+
+                    if (!IsReadablePointer(interfaceClass, 0x128)) {
+                        DebugPrintA("[DumpCs2] 跳过不可读接口: klass=%p interface=%p\n", klass, interfaceClass);
+                        continue;
+                    }
+
+                    const auto interfaceName = GetIl2CppClassName(interfaceClass, "");
+                    if (interfaceName.empty() || std::find(inheritedNames.begin(), inheritedNames.end(), interfaceName) != inheritedNames.end()) {
+                        continue;
+                    }
+
+                    inheritedNames.push_back(interfaceName);
+                }
+            }
+        }
+
+        if (!inheritedNames.empty()) {
+            os << " : ";
+            for (size_t i = 0; i < inheritedNames.size(); ++i) {
+                if (i != 0) {
+                    os << ", ";
+                }
+                os << inheritedNames[i];
             }
         }
         os << " {\n\n";
