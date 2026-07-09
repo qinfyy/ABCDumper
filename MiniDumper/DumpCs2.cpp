@@ -53,7 +53,7 @@ namespace
     constexpr size_t kMaxCStringLength = 0x4000;
     constexpr uint32_t kIl2CppObjectHeaderSize = 0x10;
     constexpr bool kDumpClassMembers = true;
-    constexpr bool kDumpParentClass = false;
+    constexpr bool kDumpParentClass = true;
     constexpr bool kDumpInternalAssemblyTable = false;
 
     struct SizeAndAlignment
@@ -595,7 +595,12 @@ namespace
             return "";
         }
 
-        auto* parent = il2cpp_class_get_parent(const_cast<Il2CppClass*>(klass));
+        auto* parent = TryGetClassParent(klass);
+        if (parent && !IsReadablePointer(parent, 0x128)) {
+            DebugPrintA("[DumpCs2] 跳过不可读父类: klass=%p parent=%p\n", klass, parent);
+            return "";
+        }
+
         return parent ? GetIl2CppClassName(parent, "") : "";
     }
 
