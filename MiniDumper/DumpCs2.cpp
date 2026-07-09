@@ -50,7 +50,6 @@ namespace
     constexpr uint32_t kFieldValueApiOffsetXor = 0xE2A40C;
     constexpr size_t kNexusMethodPointerOffset = 0x28;
     constexpr size_t kNexusMethodPointerFallbackOffset = 0x20;
-    constexpr size_t kDebugFieldSampleCount = 64;
     constexpr size_t kMaxCStringLength = 0x4000;
     constexpr uint32_t kIl2CppObjectHeaderSize = 0x10;
     constexpr bool kDumpClassMembers = true;
@@ -764,7 +763,6 @@ namespace
             return;
         }
 
-        static size_t debugFieldSamples = 0;
         uintptr_t protectedMetadataBase = 0;
         uint32_t metadataFieldStart = 0;
         const auto gameAssemblyBase = GetGameAssemblyModuleBase();
@@ -777,7 +775,6 @@ namespace
                 metadataFieldStart = *reinterpret_cast<const uint32_t*>(classMetadata + 0x44) ^ kFieldMetadataStartXor;
             }
         }
-        const auto debugThisFieldClass = className == "AE0FD514C666379D" || className == "B3EA6C947BC9BE58" || className == "F77E4216CB1B3312";
 
         struct FieldDumpRecord
         {
@@ -840,17 +837,6 @@ namespace
             }
 
             DebugPrintA("[DumpCs2] 字段 offset: klass=%p class=%s index=%u field=%p name=%s type=%s typePtr=%p typeName=%s typeReadable=%d flags=0x%X finalOffset=0x%X apiOffset=0x%llX rawOffset=%08X rawNameToken=%016llX decodedNameToken=%016llX typeKind=0x%X size=%u align=%u\n", klass, className.c_str(), i, reinterpret_cast<const void*>(field), fieldNameText.c_str(), fieldTypeName.c_str(), fieldType, fieldTypeName.c_str(), typeReadable ? 1 : 0, fieldFlags, fieldOffset, static_cast<unsigned long long>(apiOffset), offsetData, static_cast<unsigned long long>(rawNameToken), static_cast<unsigned long long>(decodedNameToken), typeKind, sizeAndAlignment.size, sizeAndAlignment.alignment);
-
-            if (debugFieldSamples < kDebugFieldSampleCount || debugThisFieldClass) {
-                const auto raw0 = *reinterpret_cast<const uintptr_t*>(field);
-                const auto raw8 = *reinterpret_cast<const uintptr_t*>(field + 0x8);
-                const auto raw10 = *reinterpret_cast<const uintptr_t*>(field + 0x10);
-                const auto raw18 = *reinterpret_cast<const uintptr_t*>(field + 0x18);
-                DebugPrintA("[DumpCs2] 字段样本[%zu]: klass=%p class=%s index=%u field=%p name=%s type=%s typePtr=%p typeReadable=%d flags=0x%X finalOffset=0x%X apiOffset=0x%llX raw0=%016llX raw8=%016llX raw10=%016llX raw18=%016llX rawOffset=%08X rawNameToken=%016llX decodedNameToken=%016llX typeKind=0x%X size=%u align=%u\n", debugFieldSamples, klass, className.c_str(), i, reinterpret_cast<const void*>(field), fieldNameText.c_str(), fieldTypeName.c_str(), fieldType, typeReadable ? 1 : 0, fieldFlags, fieldOffset, static_cast<unsigned long long>(apiOffset), static_cast<unsigned long long>(raw0), static_cast<unsigned long long>(raw8), static_cast<unsigned long long>(raw10), static_cast<unsigned long long>(raw18), offsetData, static_cast<unsigned long long>(rawNameToken), static_cast<unsigned long long>(decodedNameToken), typeKind, sizeAndAlignment.size, sizeAndAlignment.alignment);
-                if (debugFieldSamples < kDebugFieldSampleCount) {
-                    ++debugFieldSamples;
-                }
-            }
 
             fieldRecords.push_back({ fieldTypeName, fieldNameText, fieldOffset });
         }
