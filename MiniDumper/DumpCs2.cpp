@@ -822,18 +822,14 @@ namespace
             }
 
             const auto fieldFlags = GetFieldFlags(fieldInfo);
-            auto fieldOffset = 0u;
             const auto offsetData = *reinterpret_cast<const uint32_t*>(field + 0x18);
+            auto fieldOffset = (offsetData & 0xFFFFFFu) ^ kFieldValueApiOffsetXor;
             const auto apiOffset = TryGetFieldOffset(fieldInfo);
             auto sizeAndAlignment = SizeAndAlignment{ static_cast<uint32_t>(sizeof(void*)), static_cast<uint32_t>(sizeof(void*)) };
             auto typeKind = -1;
             if (typeReadable) {
                 sizeAndAlignment = GetTypeSizeAndAlignment(fieldType);
                 typeKind = TryGetTypeKind(fieldType);
-            }
-
-            if (apiOffset <= 0xFFFFFFFFu) {
-                fieldOffset = static_cast<uint32_t>(apiOffset);
             }
 
             DebugPrintA("[DumpCs2] 字段 offset: klass=%p class=%s index=%u field=%p name=%s type=%s typePtr=%p typeName=%s typeReadable=%d flags=0x%X finalOffset=0x%X apiOffset=0x%llX rawOffset=%08X rawNameToken=%016llX decodedNameToken=%016llX typeKind=0x%X size=%u align=%u\n", klass, className.c_str(), i, reinterpret_cast<const void*>(field), fieldNameText.c_str(), fieldTypeName.c_str(), fieldType, fieldTypeName.c_str(), typeReadable ? 1 : 0, fieldFlags, fieldOffset, static_cast<unsigned long long>(apiOffset), offsetData, static_cast<unsigned long long>(rawNameToken), static_cast<unsigned long long>(decodedNameToken), typeKind, sizeAndAlignment.size, sizeAndAlignment.alignment);
