@@ -76,6 +76,8 @@ DWORD WINAPI MainThread(LPVOID parameter)
 
         DumpCs2(".\\output\\dump.cs");
         DumpStringLiteral(".\\output\\StringLiteral.json");
+
+        DebugPrintA("[INFO] Dump done!\n");
     }
     catch (const std::exception& e) {
         DebugPrintA("[FATAL] 初始化异常: %s\n", e.what());
