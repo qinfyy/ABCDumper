@@ -4,6 +4,8 @@
 #include "PrintHelper.h"
 
 #include <array>
+#include <filesystem>
+#include <fstream>
 #include <sstream>
 #include <unordered_map>
 #include <vector>
@@ -74,6 +76,52 @@ namespace
         return (mbi.Protect & kExecutableFlags) != 0;
     }
 
+    const char* GetApiNameBySlot(size_t slot)
+    {
+        for (const auto& binding : kApiBindings) {
+            if (binding.slot == slot) {
+                return binding.name;
+            }
+        }
+
+        return "Unknown";
+    }
+
+    void DebugLogAddress(HMODULE gameAssembly, const std::array<uintptr_t, kApiTableEntryCount>& apiTable)
+    {
+        constexpr const char* kOutputPath = ".\\output\\Il2CppAddress.txt";
+        constexpr uintptr_t kIdaImageBase = 0x180000000;
+        const std::filesystem::path filePath(kOutputPath);
+        const auto directory = filePath.parent_path();
+        if (!directory.empty() && !std::filesystem::exists(directory)) {
+            std::filesystem::create_directories(directory);
+        }
+
+        const auto gameAssemblyBase = reinterpret_cast<uintptr_t>(gameAssembly);
+        std::ostringstream output;
+        output << "GameAssembly.dll Base=" << reinterpret_cast<void*>(gameAssemblyBase) << std::endl;
+        for (size_t i = 0; i < apiTable.size(); ++i) {
+            const auto address = apiTable[i];
+            uint64_t rva = 0;
+            uint64_t idaVa = 0;
+            if (gameAssemblyBase != 0 && address >= gameAssemblyBase) {
+                rva = static_cast<uint64_t>(address - gameAssemblyBase);
+                idaVa = static_cast<uint64_t>(kIdaImageBase + rva);
+            }
+
+            output << "index=" << static_cast<int>(i) << ", name=" << GetApiNameBySlot(i) << " -> VA=" << reinterpret_cast<void*>(address) << ", RVA=0x" << std::uppercase << std::hex << rva << ", IDA VA=0x" << idaVa << std::nouppercase << std::dec << std::endl;
+        }
+
+        const auto text = output.str();
+        std::ofstream file(kOutputPath, std::ios::binary);
+        if (!file.is_open()) {
+            DebugPrintA("[IL2CPP ERROR] 无法写入 Il2CppAddress.txt\n");
+            return;
+        }
+
+        file << text;
+    }
+
     std::unordered_map<std::string, void*> DecodeSelectedApiAddresses(HMODULE gameAssembly)
     {
         auto* getApiTable = reinterpret_cast<Il2CppGetApiTable>(GetProcAddress(gameAssembly, "il2cpp_get_api_table"));
@@ -84,6 +132,7 @@ namespace
 
         std::array<uintptr_t, kApiTableEntryCount> apiTable{};
         getApiTable(apiTable.data());
+        DebugLogAddress(gameAssembly, apiTable);
 
         const auto gameAssemblyBase = GetGameAssemblyModuleBase();
         size_t nonZeroApiTableCount = 0;
