@@ -48,3 +48,51 @@ class BFC2EF23E3C68227 : A23D16CE08AF89EC {
 
 }
 ```
+
+String Literal
+```Json
+{
+  "ScriptString": [
+    {
+      "Address": 31837456,
+      "Value": "BillboardIcon"
+    },
+    {
+      "Address": 31837464,
+      "Value": "IconRoot"
+    },
+    {
+      "Address": 31837472,
+      "Value": "CanvasRoot"
+    },
+    {
+      "Address": 31837480,
+      "Value": "Root"
+    },
+    {
+      "Address": 31837488,
+      "Value": "GaitType"
+    },
+    {
+      "Address": 31837496,
+      "Value": "CurrentMoveStateType"
+    },
+    {
+      "Address": 31837504,
+      "Value": "LastMoveStateType"
+    },
+    {
+      "Address": 31837512,
+      "Value": "Speed"
+    },
+    {
+      "Address": 31837520,
+      "Value": "Slope"
+    },
+    {
+      "Address": 31837528,
+      "Value": "Pitch"
+    }
+  ]
+}
+```
