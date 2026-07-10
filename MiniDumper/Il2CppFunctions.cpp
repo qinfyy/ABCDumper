@@ -111,7 +111,7 @@ namespace
                 ++gameAssemblyApiTableCount;
             }
 
-            DebugPrintA("[IL2CPP] [TABLE] index=%04zu -> VA: %p, RVA: 0x%llX, IDA VA: 0x%llX, exec=%s\n", i, reinterpret_cast<void*>(value), rva, idaVa, executable ? "true" : "false");
+            DebugPrintA("[IL2CPP] index=%04zu -> VA: %p, RVA: 0x%llX, IDA VA: 0x%llX, exec=%s\n", i, reinterpret_cast<void*>(value), rva, idaVa, executable ? "true" : "false");
         }
         DebugPrintA("[IL2CPP] il2cpp_get_api_table raw output end: nonzero=%zu executable=%zu gameAssemblyRange=%zu\n", nonZeroApiTableCount, executableApiTableCount, gameAssemblyApiTableCount);
 
