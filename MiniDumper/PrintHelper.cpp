@@ -9,6 +9,7 @@ constexpr int MAX_BUFFER_SIZE = 512;
 
 static bool g_consoleInitialized = false;
 static std::mutex g_consoleLock;
+static HANDLE g_consoleOutputHandler;
 
 void InitializeConsole()
 {
@@ -24,6 +25,8 @@ void InitializeConsole()
     freopen_s(&fp, "CONIN$", "r", stdin);
 
     g_consoleInitialized = true;
+
+    g_consoleOutputHandler = CreateFile(L"\\\\.\\CONOUT$", FILE_GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, NULL, NULL);
 }
 
 void DebugPrintVA(const char* fmt, va_list args)
@@ -34,20 +37,24 @@ void DebugPrintVA(const char* fmt, va_list args)
     va_copy(copy, args);
     int len = _vscprintf(fmt, copy);
     va_end(copy);
-    if (len <= 0) return;
+    if (len <= 0) {
+        return;
+    }
 
     char stackBuf[MAX_BUFFER_SIZE];
     char* buf = (len < MAX_BUFFER_SIZE) ? stackBuf : (char*)malloc(len + 1);
-    if (!buf) return;
+    if (!buf) {
+        return;
+    }
 
     vsprintf_s(buf, len + 1, fmt, args);
+    DWORD charsWritten = 0;
 
-    printf("%s", buf);
+    WriteConsoleA(g_consoleOutputHandler, buf, len, &charsWritten, NULL);
 
-    if (len >= MAX_BUFFER_SIZE)
+    if (len >= MAX_BUFFER_SIZE) {
         free(buf);
-
-    fflush(stdout);
+    }
 }
 
 void DebugPrintVW(const wchar_t* fmt, va_list args)
@@ -58,20 +65,24 @@ void DebugPrintVW(const wchar_t* fmt, va_list args)
     va_copy(copy, args);
     int len = _vscwprintf(fmt, copy);
     va_end(copy);
-    if (len <= 0) return;
+    if (len <= 0) {
+        return;
+    }
 
     wchar_t stackBuf[MAX_BUFFER_SIZE];
     wchar_t* buf = (len < MAX_BUFFER_SIZE) ? stackBuf : (wchar_t*)malloc((len + 1) * sizeof(wchar_t));
-    if (!buf) return;
+    if (!buf) {
+        return;
+    }
 
     vswprintf_s(buf, len + 1, fmt, args);
+    DWORD charsWritten = 0;
 
-    wprintf(L"%ls", buf);
+    WriteConsoleW(g_consoleOutputHandler, buf, len, &charsWritten, NULL);
 
-    if (len >= MAX_BUFFER_SIZE)
+    if (len >= MAX_BUFFER_SIZE) {
         free(buf);
-
-    fflush(stdout);
+    }
 }
 
 void DebugPrintA(const char* fmt, ...)
