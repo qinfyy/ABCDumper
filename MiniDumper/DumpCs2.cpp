@@ -322,6 +322,19 @@ namespace
         return isValueType;
     }
 
+    bool TryIsClassEnum(const Il2CppClass* klass)
+    {
+        bool isEnum = false;
+        __try {
+            isEnum = il2cpp_class_is_enum ? il2cpp_class_is_enum(klass) : false;
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER) {
+            DebugPrintA("[DumpCs2] il2cpp_class_is_enum 异常: klass=%p\n", klass);
+        }
+
+        return isEnum;
+    }
+
     int32_t TryGetClassValueSize(Il2CppClass* klass, uint32_t* alignment)
     {
         int32_t size = 0;
@@ -926,9 +939,18 @@ namespace
         if (image && il2cpp_image_get_name) {
             os << SafeString(il2cpp_image_get_name(image));
         }
+
         os << "\n";
 
+        if (TryIsClassEnum(klass)) {
+            os << "enum ";
+        }
+        else if (TryIsClassValueType(klass)) {
+            os << "struct ";
+        }
+
         os << "class " << className;
+
         std::vector<std::string> inheritedNames;
         if constexpr (kDumpParentClass) {
             const auto parentName = GetParentName(klass);
