@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <DbgHelp.h>
 #include "DumpCs2.h"
+#include "StringLiteral.h"
 
 namespace
 {
@@ -73,7 +74,8 @@ DWORD WINAPI MainThread(LPVOID parameter)
 
         auto* thread = il2cpp_thread_attach(domain);
 
-        DumpCs2(".\\output\\dump.cs");
+        //DumpCs2(".\\output\\dump.cs");
+        DumpStringLiteral(".\\output\\StringLiteral.json");
     }
     catch (const std::exception& e) {
         DebugPrintA("[FATAL] 初始化异常: %s\n", e.what());
