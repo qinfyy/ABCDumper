@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "DumpCs2.h"
 
+#include "Constants.h"
 #include "Il2CppFunctions.h"
 #include "PrintHelper.h"
 
@@ -28,30 +29,6 @@ static_assert(offsetof(MethodInfo, flags) == 0x2A);
 
 namespace
 {
-    constexpr uintptr_t kInternalAssemblyTableRva = 0x20896D0;
-    constexpr uintptr_t kStringDecodeRva = 0x6D4EB0;
-    constexpr size_t kInternalAssemblyCount = 0x62;
-    constexpr size_t kInternalAssemblyStride = 0x18;
-    constexpr size_t kMaxImageClassCount = 200000;
-    constexpr size_t kMaxMemberCount = 200000;
-    constexpr size_t kClassFieldsOffset = 0x80;
-    constexpr size_t kClassFieldCountOffset = 0x114;
-    constexpr size_t kFieldInfoSize = 0x20;
-    constexpr uintptr_t kProtectedMetadataBaseGlobalRva = 0x20896B8;
-    constexpr uintptr_t kProtectedFieldMetadataOffset = 0x538398;
-    constexpr uint32_t kFieldMetadataStartXor = 0x2EE556B4;
-    constexpr uintptr_t kFieldNameTokenXor = 0x475139FE2D91A4FF;
-    constexpr uint32_t kFieldMetadataIndexAdd = 0xB1F1C1BA;
-    constexpr uint32_t kFieldMetadataOffsetXor = 0x03AE7562;
-    constexpr uintptr_t kFieldTypeMethodXor = 0x695367855EBB9ED9;
-    constexpr uintptr_t kFieldTypeMethodAdd = 0xA0A6BFEBD56CF834;
-    constexpr uintptr_t kFieldParentXor = 0x4994C8584E1F5204;
-    constexpr uint32_t kFieldOffsetAdd = 0x9DC67E34;
-    constexpr uint32_t kFieldValueApiOffsetXor = 0xE2A40C;
-    constexpr size_t kNexusMethodPointerOffset = 0x28;
-    constexpr size_t kNexusMethodPointerFallbackOffset = 0x20;
-    constexpr size_t kMaxCStringLength = 0x4000;
-    constexpr uint32_t kIl2CppObjectHeaderSize = 0x10;
     constexpr bool kDumpClassMembers = true;
     constexpr bool kDumpParentClass = true;
     constexpr bool kDumpInterfaces = true;

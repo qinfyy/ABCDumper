@@ -97,6 +97,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Constants.h" />
     <ClInclude Include="DumpCs2.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Il2CppFunctions.h" />

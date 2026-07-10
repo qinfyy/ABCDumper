@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "StringLiteral.h"
 
+#include "Constants.h"
 #include "Il2CppFunctions.h"
 #include "PrintHelper.h"
 
@@ -16,31 +17,6 @@
 
 namespace
 {
-    constexpr uintptr_t kInitMetadataRangeRva = 0x6D3000;
-    constexpr uintptr_t kProtectedMetadataBaseGlobalRva = 0x20896B8;
-    constexpr uintptr_t kUsageCacheTableRva = 0x1DAF0D0;
-    constexpr uintptr_t kStringLiteralTableRva = 0x1E5CD10;
-    constexpr uint32_t kUsageListOffset = 0x16DDB8;
-    constexpr uint32_t kUsageListStartSub = 0x0A09F36F;
-    constexpr uint32_t kUsageListEndSub = 0x3FE3C243;
-    constexpr uint32_t kUsagePairIndexAdd = 0x2B172B;
-    constexpr uint32_t kStringIndexListAdd = 0x114AD9;
-    constexpr uint32_t kUsageEncodedOffset = 0x9ED180;
-    constexpr uint32_t kStringLiteralLengthOffset = 0x13AD1DC;
-    constexpr uint32_t kStringLiteralLengthXor = 0x57AFB483;
-    constexpr uint32_t kStringLiteralDataOffset = 0x13AD1E0;
-    constexpr uint32_t kStringLiteralDataOffsetXor = 0x21D6690C;
-    constexpr uint32_t kStringLiteralDataBaseAdd = 0x13ECC70;
-    constexpr uint32_t kStringLiteralUsageType = 5;
-    constexpr uint32_t kMaxUsagePairCount = 0x100000;
-    constexpr uint32_t kMaxStringIndexCount = 0x100000;
-    constexpr uint32_t kMaxStringLiteralLength = 0x100000;
-    constexpr uint64_t kStringKeySourceMul = 0x7555E6CD072DF156;
-    constexpr uint64_t kStringKeySourceXor = 0x5474924A04CC6763;
-    constexpr uint64_t kStringKeyMul = 0x9FD7EBCFA1B6DB7E;
-    constexpr uint64_t kStringKeyAdd = 0xFC5C61C69C5516C9;
-    constexpr uint64_t kStringKeyStep = 0x06665D3E5028D592;
-
     struct StringLiteralEntry
     {
         uint64_t address;
