@@ -695,6 +695,38 @@ namespace
         return "arg" + std::to_string(index + 1);
     }
 
+    std::string GetParamModifier(const Il2CppType* type)
+    {
+        if (!type || !IsReadablePointer(type)) {
+            return "";
+        }
+
+        const auto attrs = TryGetTypeAttrs(type);
+        if (TryIsTypeByRef(type)) {
+            if ((attrs & PARAM_ATTRIBUTE_OUT) != 0 && (attrs & PARAM_ATTRIBUTE_IN) == 0) {
+                return "out ";
+            }
+            if ((attrs & PARAM_ATTRIBUTE_IN) != 0 && (attrs & PARAM_ATTRIBUTE_OUT) == 0) {
+                return "in ";
+            }
+            return "ref ";
+        }
+
+        std::string modifier;
+        const auto hasInAttribute = (attrs & PARAM_ATTRIBUTE_IN) != 0;
+        const auto hasOutAttribute = (attrs & PARAM_ATTRIBUTE_OUT) != 0;
+        if (hasInAttribute && hasOutAttribute) {
+            return "[In, Out] ";
+        }
+        if (hasInAttribute) {
+            modifier += "[In] ";
+        }
+        if (hasOutAttribute) {
+            modifier += "[Out] ";
+        }
+        return modifier;
+    }
+
     SizeAndAlignment GetTypeSizeAndAlignment(const Il2CppType* type)
     {
         if (!type) {
@@ -909,7 +941,7 @@ namespace
 
             for (uint32_t i = 0; i < paramCount; ++i) {
                 const auto* paramType = TryGetMethodParam(method, i);
-                os << GetTypeName(paramType) << " " << GetParamName(method, i);
+                os << GetParamModifier(paramType) << GetTypeName(paramType) << " " << GetParamName(method, i);
                 if (i + 1 < paramCount) {
                     os << ", ";
                 }
