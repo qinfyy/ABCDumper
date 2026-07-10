@@ -55,7 +55,7 @@ DWORD WINAPI MainThread(LPVOID parameter)
         Sleep(200);
     }
 
-    DebugPrintA("[INFO] GameAssembly.dll: 0x%llX\n", base);
+    DebugPrintA("[INFO] GameAssembly.dll loaded, base: 0x%llX, Starting dump ...\n", base);
 
     for (int i = 20; i > 0; --i) {
        DebugPrintA("\r[INFO] Wait for %d seconds before starting il2cpp dump ...  ", i);
