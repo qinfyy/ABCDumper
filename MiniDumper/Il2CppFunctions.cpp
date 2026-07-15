@@ -2,6 +2,7 @@
 #include "Il2CppFunctions.h"
 
 #include "PrintHelper.h"
+#include "Memory.h"
 
 #include <array>
 #include <filesystem>
@@ -60,21 +61,6 @@ namespace
         { "il2cpp_image_get_class_count", 212 },
         { "il2cpp_image_get_class", 213 },
     };
-
-    bool IsExecutableAddress(uintptr_t address)
-    {
-        MEMORY_BASIC_INFORMATION mbi{};
-        if (!VirtualQuery(reinterpret_cast<void*>(address), &mbi, sizeof(mbi))) {
-            return false;
-        }
-
-        if (mbi.State != MEM_COMMIT) {
-            return false;
-        }
-
-        constexpr DWORD kExecutableFlags = PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY;
-        return (mbi.Protect & kExecutableFlags) != 0;
-    }
 
     const char* GetApiNameBySlot(size_t slot)
     {
@@ -147,7 +133,7 @@ namespace
             }
 
             ++nonZeroApiTableCount;
-            const auto executable = IsExecutableAddress(value);
+            const auto executable = IsExecutablePointer(value);
             if (executable) {
                 ++executableApiTableCount;
             }
@@ -168,7 +154,7 @@ namespace
         std::vector<std::string> failedApis;
         for (const auto& binding : kApiBindings) {
             const auto apiAddress = binding.slot < apiTable.size() ? apiTable[binding.slot] : 0;
-            if (!apiAddress || !IsExecutableAddress(apiAddress)) {
+            if (!apiAddress || !IsExecutablePointer(apiAddress)) {
                 failedApis.emplace_back(binding.name);
                 continue;
             }

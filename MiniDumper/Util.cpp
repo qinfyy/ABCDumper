@@ -169,3 +169,8 @@ bool ContainsIgnoreCaseA(PCSTR haystack, PCSTR needle)
     return false;
 }
 
+std::string SafeString(const char* value, const char* fallback)
+{
+    return value ? value : fallback;
+}
+

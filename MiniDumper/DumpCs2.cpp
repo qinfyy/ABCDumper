@@ -3,7 +3,9 @@
 
 #include "Constants.h"
 #include "Il2CppFunctions.h"
+#include "Memory.h"
 #include "PrintHelper.h"
+#include "Util.h"
 
 #include <filesystem>
 #include <fstream>
@@ -39,90 +41,6 @@ namespace
         uint32_t size;
         uint32_t alignment;
     };
-
-    bool IsReadablePointer(const void* address, size_t size = 1)
-    {
-        if (!address) {
-            return false;
-        }
-
-        MEMORY_BASIC_INFORMATION mbi{};
-        if (!VirtualQuery(address, &mbi, sizeof(mbi))) {
-            return false;
-        }
-
-        if (mbi.State != MEM_COMMIT || (mbi.Protect & (PAGE_NOACCESS | PAGE_GUARD)) != 0) {
-            return false;
-        }
-
-        const auto begin = reinterpret_cast<uintptr_t>(address);
-        const auto regionBegin = reinterpret_cast<uintptr_t>(mbi.BaseAddress);
-        const auto regionEnd = regionBegin + mbi.RegionSize;
-        return begin >= regionBegin && begin + size <= regionEnd;
-    }
-
-    bool IsExecutablePointer(uintptr_t address)
-    {
-        if (!address) {
-            return false;
-        }
-
-        MEMORY_BASIC_INFORMATION mbi{};
-        if (!VirtualQuery(reinterpret_cast<const void*>(address), &mbi, sizeof(mbi))) {
-            return false;
-        }
-
-        constexpr DWORD kExecutableFlags = PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY;
-        return mbi.State == MEM_COMMIT && (mbi.Protect & (PAGE_NOACCESS | PAGE_GUARD)) == 0 && (mbi.Protect & kExecutableFlags) != 0;
-    }
-
-    const char* ValidateCString(const char* value)
-    {
-        if (!value) {
-            return nullptr;
-        }
-
-        auto address = reinterpret_cast<uintptr_t>(value);
-        size_t checkedLength = 0;
-        while (checkedLength < kMaxCStringLength) {
-            MEMORY_BASIC_INFORMATION mbi{};
-            if (!VirtualQuery(reinterpret_cast<const void*>(address), &mbi, sizeof(mbi))) {
-                return nullptr;
-            }
-
-            if (mbi.State != MEM_COMMIT || (mbi.Protect & (PAGE_NOACCESS | PAGE_GUARD)) != 0) {
-                return nullptr;
-            }
-
-            const auto regionEnd = reinterpret_cast<uintptr_t>(mbi.BaseAddress) + mbi.RegionSize;
-            const auto chunkSize = (std::min)(regionEnd - address, kMaxCStringLength - checkedLength);
-            if (chunkSize == 0) {
-                return nullptr;
-            }
-
-            const void* terminator = nullptr;
-            __try {
-                terminator = std::memchr(reinterpret_cast<const void*>(address), '\0', chunkSize);
-            }
-            __except (EXCEPTION_EXECUTE_HANDLER) {
-                return nullptr;
-            }
-
-            if (terminator) {
-                return value;
-            }
-
-            address += chunkSize;
-            checkedLength += chunkSize;
-        }
-
-        return nullptr;
-    }
-
-    std::string SafeString(const char* value, const char* fallback = "")
-    {
-        return value ? value : fallback;
-    }
 
     const char* DecodeInternalString(uintptr_t value)
     {

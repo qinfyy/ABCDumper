@@ -3,6 +3,7 @@
 
 #include "Constants.h"
 #include "Il2CppFunctions.h"
+#include "Memory.h"
 #include "PrintHelper.h"
 
 #include <algorithm>
@@ -22,49 +23,6 @@ namespace
         uint64_t address;
         std::string value;
     };
-
-    bool IsReadableProtection(DWORD protect)
-    {
-        if ((protect & (PAGE_NOACCESS | PAGE_GUARD)) != 0) {
-            return false;
-        }
-
-        constexpr DWORD kReadableFlags = PAGE_READONLY | PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY;
-        return (protect & kReadableFlags) != 0;
-    }
-
-    bool IsReadablePointer(const void* address, size_t size = 1)
-    {
-        if (!address || size == 0) {
-            return false;
-        }
-
-        MEMORY_BASIC_INFORMATION mbi{};
-        if (!VirtualQuery(address, &mbi, sizeof(mbi))) {
-            return false;
-        }
-
-        const auto begin = reinterpret_cast<uintptr_t>(address);
-        const auto regionBegin = reinterpret_cast<uintptr_t>(mbi.BaseAddress);
-        const auto regionEnd = regionBegin + mbi.RegionSize;
-        return mbi.State == MEM_COMMIT && IsReadableProtection(mbi.Protect) && begin >= regionBegin && begin + size <= regionEnd;
-    }
-
-    template <typename T>
-    bool TryReadValue(uintptr_t address, T* value)
-    {
-        if (!value || !IsReadablePointer(reinterpret_cast<const void*>(address), sizeof(T))) {
-            return false;
-        }
-
-        __try {
-            *value = *reinterpret_cast<const T*>(address);
-            return true;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            return false;
-        }
-    }
 
     bool GetGameAssemblyImage(uintptr_t* imageBase, size_t* imageSize, IMAGE_NT_HEADERS64** ntHeaders)
     {

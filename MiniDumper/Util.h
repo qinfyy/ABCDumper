@@ -37,3 +37,5 @@ std::string Utf16ToAnsi(const std::wstring& wstr);
 std::wstring AnsiToUtf16(const std::string& str);
 
 std::string AsciiEscapeToEscapeLiterals(const std::string& input);
+
+std::string SafeString(const char* value, const char* fallback = "");
