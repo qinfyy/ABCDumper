@@ -62,377 +62,6 @@ namespace
         return ValidateCString(result);
     }
 
-    const Il2CppClass* TryGetImageClass(const Il2CppImage* image, size_t index)
-    {
-        const Il2CppClass* klass = nullptr;
-        __try {
-            klass = il2cpp_image_get_class ? il2cpp_image_get_class(image, index) : nullptr;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_image_get_class 异常: image=%p index=%zu\n", image, index);
-        }
-
-        return klass;
-    }
-
-    const char* TryGetTypeName(const Il2CppType* type)
-    {
-        if (!type || !IsReadablePointer(type)) {
-            return nullptr;
-        }
-
-        const char* name = nullptr;
-        __try {
-            name = il2cpp_type_get_name ? il2cpp_type_get_name(type) : nullptr;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_type_get_name 异常: type=%p\n", type);
-        }
-
-        return ValidateCString(name);
-    }
-
-    uint32_t TryGetTypeAttrs(const Il2CppType* type)
-    {
-        if (!type || !IsReadablePointer(type)) {
-            return 0;
-        }
-
-        uint32_t attrs = 0;
-        __try {
-            attrs = il2cpp_type_get_attrs ? il2cpp_type_get_attrs(type) : 0;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_type_get_attrs 异常: type=%p\n", type);
-        }
-
-        return attrs;
-    }
-
-    int TryGetTypeKind(const Il2CppType* type)
-    {
-        if (!type || !IsReadablePointer(type)) {
-            return -1;
-        }
-
-        int typeKind = -1;
-        __try {
-            typeKind = il2cpp_type_get_type ? il2cpp_type_get_type(type) : -1;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_type_get_type 异常: type=%p\n", type);
-        }
-
-        return typeKind;
-    }
-
-    const char* TryGetClassName(const Il2CppClass* klass)
-    {
-        const char* name = nullptr;
-        __try {
-            name = il2cpp_class_get_name ? il2cpp_class_get_name(const_cast<Il2CppClass*>(klass)) : nullptr;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_class_get_name 异常: klass=%p\n", klass);
-        }
-
-        return ValidateCString(name);
-    }
-
-    const char* TryGetClassNamespace(const Il2CppClass* klass)
-    {
-        const char* namespaze = nullptr;
-        __try {
-            namespaze = il2cpp_class_get_namespace ? il2cpp_class_get_namespace(const_cast<Il2CppClass*>(klass)) : nullptr;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_class_get_namespace 异常: klass=%p\n", klass);
-        }
-
-        return ValidateCString(namespaze);
-    }
-
-    uint32_t TryGetClassFlags(const Il2CppClass* klass)
-    {
-        uint32_t flags = 0;
-        __try {
-            flags = il2cpp_class_get_flags ? static_cast<uint32_t>(il2cpp_class_get_flags(klass)) : 0;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_class_get_flags 异常: klass=%p\n", klass);
-        }
-
-        return flags;
-    }
-
-    Il2CppClass* TryGetClassParent(const Il2CppClass* klass)
-    {
-        Il2CppClass* parent = nullptr;
-        __try {
-            parent = il2cpp_class_get_parent ? il2cpp_class_get_parent(const_cast<Il2CppClass*>(klass)) : nullptr;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_class_get_parent 异常: klass=%p\n", klass);
-        }
-
-        return parent;
-    }
-
-    Il2CppClass* TryGetNextInterface(const Il2CppClass* klass, void** iter)
-    {
-        Il2CppClass* interfaceClass = nullptr;
-        __try {
-            interfaceClass = il2cpp_class_get_interfaces ? il2cpp_class_get_interfaces(const_cast<Il2CppClass*>(klass), iter) : nullptr;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_class_get_interfaces 异常: klass=%p iter=%p\n", klass, iter ? *iter : nullptr);
-        }
-
-        return interfaceClass;
-    }
-
-    int32_t TryGetClassInstanceSize(const Il2CppClass* klass)
-    {
-        int32_t size = 0;
-        __try {
-            size = il2cpp_class_instance_size ? il2cpp_class_instance_size(const_cast<Il2CppClass*>(klass)) : 0;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_class_instance_size 异常: klass=%p\n", klass);
-        }
-
-        return size;
-    }
-
-    bool TryIsClassValueType(const Il2CppClass* klass)
-    {
-        bool isValueType = false;
-        __try {
-            isValueType = il2cpp_class_is_valuetype ? il2cpp_class_is_valuetype(klass) : false;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_class_is_valuetype 异常: klass=%p\n", klass);
-        }
-
-        return isValueType;
-    }
-
-    bool TryIsClassEnum(const Il2CppClass* klass)
-    {
-        bool isEnum = false;
-        __try {
-            isEnum = il2cpp_class_is_enum ? il2cpp_class_is_enum(klass) : false;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_class_is_enum 异常: klass=%p\n", klass);
-        }
-
-        return isEnum;
-    }
-
-    int32_t TryGetClassValueSize(Il2CppClass* klass, uint32_t* alignment)
-    {
-        int32_t size = 0;
-        __try {
-            size = il2cpp_class_value_size ? il2cpp_class_value_size(klass, alignment) : 0;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_class_value_size 异常: klass=%p\n", klass);
-        }
-
-        return size;
-    }
-
-    Il2CppClass* TryGetClassFromType(const Il2CppType* type)
-    {
-        if (!type || !IsReadablePointer(type)) {
-            return nullptr;
-        }
-
-        Il2CppClass* klass = nullptr;
-        __try {
-            klass = il2cpp_class_from_type ? il2cpp_class_from_type(type) : nullptr;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_class_from_type 异常: type=%p\n", type);
-        }
-
-        return klass;
-    }
-
-    bool TryIsTypeByRef(const Il2CppType* type)
-    {
-        if (!type || !IsReadablePointer(type)) {
-            return false;
-        }
-
-        bool isByRef = false;
-        __try {
-            isByRef = il2cpp_type_is_byref ? il2cpp_type_is_byref(type) : false;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_type_is_byref 异常: type=%p\n", type);
-        }
-
-        return isByRef;
-    }
-
-    FieldInfo* TryGetNextField(const Il2CppClass* klass, void** iter)
-    {
-        FieldInfo* field = nullptr;
-        __try {
-            field = il2cpp_class_get_fields ? il2cpp_class_get_fields(const_cast<Il2CppClass*>(klass), iter) : nullptr;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_class_get_fields 异常: klass=%p iter=%p\n", klass, iter ? *iter : nullptr);
-        }
-
-        return field;
-    }
-
-    const MethodInfo* TryGetNextMethod(const Il2CppClass* klass, void** iter)
-    {
-        const MethodInfo* method = nullptr;
-        __try {
-            method = il2cpp_class_get_methods ? il2cpp_class_get_methods(const_cast<Il2CppClass*>(klass), iter) : nullptr;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_class_get_methods 异常: klass=%p iter=%p\n", klass, iter ? *iter : nullptr);
-        }
-
-        return method;
-    }
-
-    const char* TryGetFieldName(FieldInfo* field)
-    {
-        const char* name = nullptr;
-        __try {
-            name = il2cpp_field_get_name ? il2cpp_field_get_name(field) : nullptr;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_field_get_name 异常: field=%p\n", field);
-        }
-
-        return ValidateCString(name);
-    }
-
-    const Il2CppType* TryGetFieldType(FieldInfo* field)
-    {
-        const Il2CppType* type = nullptr;
-        __try {
-            type = il2cpp_field_get_type ? il2cpp_field_get_type(field) : nullptr;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_field_get_type 异常: field=%p\n", field);
-        }
-
-        return type;
-    }
-
-    size_t TryGetFieldOffset(FieldInfo* field)
-    {
-        size_t offset = 0;
-        __try {
-            offset = il2cpp_field_get_offset ? il2cpp_field_get_offset(field) : 0;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_field_get_offset 异常: field=%p\n", field);
-        }
-
-        return offset;
-    }
-
-    uint32_t TryGetFieldFlags(FieldInfo* field)
-    {
-        uint32_t flags = 0;
-        __try {
-            flags = il2cpp_field_get_flags ? static_cast<uint32_t>(il2cpp_field_get_flags(field)) : 0;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-        }
-
-        return flags;
-    }
-
-    const char* TryGetMethodName(const MethodInfo* method)
-    {
-        const char* name = nullptr;
-        __try {
-            name = il2cpp_method_get_name ? il2cpp_method_get_name(method) : nullptr;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_method_get_name 异常: method=%p\n", method);
-        }
-
-        return ValidateCString(name);
-    }
-
-    const Il2CppType* TryGetMethodReturnType(const MethodInfo* method)
-    {
-        const Il2CppType* type = nullptr;
-        __try {
-            type = il2cpp_method_get_return_type ? il2cpp_method_get_return_type(method) : nullptr;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_method_get_return_type 异常: method=%p\n", method);
-        }
-
-        return type;
-    }
-
-    uint32_t TryGetMethodParamCount(const MethodInfo* method)
-    {
-        uint32_t count = 0;
-        __try {
-            count = il2cpp_method_get_param_count ? il2cpp_method_get_param_count(method) : 0;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_method_get_param_count 异常: method=%p\n", method);
-        }
-
-        return count;
-    }
-
-    const Il2CppType* TryGetMethodParam(const MethodInfo* method, uint32_t index)
-    {
-        const Il2CppType* type = nullptr;
-        __try {
-            type = il2cpp_method_get_param ? il2cpp_method_get_param(method, index) : nullptr;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_method_get_param 异常: method=%p index=%u\n", method, index);
-        }
-
-        return type;
-    }
-
-    const char* TryGetMethodParamName(const MethodInfo* method, uint32_t index)
-    {
-        const char* name = nullptr;
-        __try {
-            name = il2cpp_method_get_param_name ? il2cpp_method_get_param_name(method, index) : nullptr;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_method_get_param_name 异常: method=%p index=%u\n", method, index);
-        }
-
-        return ValidateCString(name);
-    }
-
-    uint32_t TryGetMethodFlags(const MethodInfo* method)
-    {
-        uint32_t flags = 0;
-        __try {
-            flags = il2cpp_method_get_flags ? il2cpp_method_get_flags(method, nullptr) : 0;
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER) {
-            DebugPrintA("[DumpCs2] il2cpp_method_get_flags 异常: method=%p\n", method);
-        }
-
-        return flags;
-    }
-
-
     std::string ToBinary32(uint32_t value)
     {
         std::string result = "0b";
@@ -466,11 +95,11 @@ namespace
 
     std::string GetTypeName(const Il2CppType* type, const char* fallback = "UnknownType")
     {
-        if (!type || !il2cpp_type_get_name) {
+        if (!type || !IsReadablePointer(type) || !il2cpp_type_get_name || !il2cpp_type_get_type) {
             return fallback;
         }
 
-        switch (TryGetTypeKind(type)) {
+        switch (il2cpp_type_get_type(type)) {
         case 0x01: return "void";
         case 0x02: return "bool";
         case 0x03: return "char";
@@ -489,7 +118,7 @@ namespace
         default: break;
         }
 
-        auto* name = TryGetTypeName(type);
+        const auto* name = ValidateCString(il2cpp_type_get_name(type));
         return FormatTypeName(SafeString(name, fallback));
     }
 
@@ -499,7 +128,7 @@ namespace
             return fallback;
         }
 
-        return SafeString(TryGetClassName(klass), fallback);
+        return SafeString(ValidateCString(il2cpp_class_get_name(const_cast<Il2CppClass*>(klass))), fallback);
     }
 
     std::string GetClassNamespace(const Il2CppClass* klass)
@@ -508,7 +137,7 @@ namespace
             return "";
         }
 
-        return SafeString(TryGetClassNamespace(klass));
+        return SafeString(ValidateCString(il2cpp_class_get_namespace(const_cast<Il2CppClass*>(klass))));
     }
 
     std::string GetParentName(const Il2CppClass* klass)
@@ -517,7 +146,7 @@ namespace
             return "";
         }
 
-        auto* parent = TryGetClassParent(klass);
+        auto* parent = il2cpp_class_get_parent(const_cast<Il2CppClass*>(klass));
         if (parent && !IsReadablePointer(parent, 0x128)) {
             DebugPrintA("[DumpCs2] 跳过不可读父类: klass=%p parent=%p\n", klass, parent);
             return "";
@@ -532,7 +161,7 @@ namespace
             return 0;
         }
 
-        return TryGetFieldFlags(field);
+        return il2cpp_field_get_flags ? static_cast<uint32_t>(il2cpp_field_get_flags(field)) : 0;
     }
 
     uint32_t GetMethodFlags(const MethodInfo* method)
@@ -541,7 +170,7 @@ namespace
             return 0;
         }
 
-        return TryGetMethodFlags(method);
+        return il2cpp_method_get_flags ? il2cpp_method_get_flags(method, nullptr) : 0;
     }
 
     uintptr_t GetMethodPointer(const MethodInfo* method)
@@ -582,7 +211,7 @@ namespace
 
     std::string GetParamName(const MethodInfo* method, uint32_t index)
     {
-        const auto* name = TryGetMethodParamName(method, index);
+        const auto* name = il2cpp_method_get_param_name ? ValidateCString(il2cpp_method_get_param_name(method, index)) : nullptr;
         if (name && name[0] != '\0') {
             return name;
         }
@@ -596,8 +225,8 @@ namespace
             return "";
         }
 
-        const auto attrs = TryGetTypeAttrs(type);
-        if (TryIsTypeByRef(type)) {
+        const auto attrs = il2cpp_type_get_attrs ? il2cpp_type_get_attrs(type) : 0;
+        if (il2cpp_type_is_byref && il2cpp_type_is_byref(type)) {
             if ((attrs & PARAM_ATTRIBUTE_OUT) != 0 && (attrs & PARAM_ATTRIBUTE_IN) == 0) {
                 return "out ";
             }
@@ -628,11 +257,16 @@ namespace
             return { sizeof(void*), sizeof(void*) };
         }
 
-        if (TryIsTypeByRef(type)) {
+        if (il2cpp_type_is_byref && il2cpp_type_is_byref(type)) {
             return { sizeof(void*), sizeof(void*) };
         }
 
-        switch (TryGetTypeKind(type)) {
+        if (!il2cpp_type_get_type) {
+            return { sizeof(void*), sizeof(void*) };
+        }
+
+        const auto typeKind = il2cpp_type_get_type(type);
+        switch (typeKind) {
         case 0x02:
         case 0x04:
         case 0x05:
@@ -664,17 +298,25 @@ namespace
         case 0x11:
         case 0x15:
         {
-            auto* klass = TryGetClassFromType(type);
+            if (!il2cpp_class_from_type) {
+                return { sizeof(void*), sizeof(void*) };
+            }
+
+            auto* klass = il2cpp_class_from_type(type);
             if (!klass) {
                 return { sizeof(void*), sizeof(void*) };
             }
 
-            if (TryGetTypeKind(type) == 0x15 && !TryIsClassValueType(klass)) {
+            if (typeKind == 0x15 && (!il2cpp_class_is_valuetype || !il2cpp_class_is_valuetype(klass))) {
+                return { sizeof(void*), sizeof(void*) };
+            }
+
+            if (!il2cpp_class_value_size) {
                 return { sizeof(void*), sizeof(void*) };
             }
 
             uint32_t alignment = 0;
-            const auto size = TryGetClassValueSize(klass, &alignment);
+            const auto size = il2cpp_class_value_size(klass, &alignment);
             if (size <= 0) {
                 return { sizeof(void*), sizeof(void*) };
             }
@@ -712,7 +354,7 @@ namespace
         if (!fields && il2cpp_class_get_fields) {
             DebugPrintA("[DumpCs2] 字段表未初始化，尝试触发 builder: klass=%p count=%u\n", klass, fieldCount);
             void* iter = nullptr;
-            const auto* firstField = TryGetNextField(klass, &iter);
+            const auto* firstField = il2cpp_class_get_fields(const_cast<Il2CppClass*>(klass), &iter);
             fields = *reinterpret_cast<const uintptr_t*>(klassAddress + kClassFieldsOffset);
             DebugPrintA("[DumpCs2] 字段 builder 返回: klass=%p firstField=%p iter=%p fields=%p\n", klass, firstField, iter, reinterpret_cast<const void*>(fields));
         }
@@ -748,8 +390,8 @@ namespace
         for (uint16_t i = 0; i < fieldCount; ++i) {
             const auto field = fields + static_cast<uintptr_t>(i) * kFieldInfoSize;
             auto* fieldInfo = reinterpret_cast<FieldInfo*>(field);
-            const auto* fieldName = TryGetFieldName(fieldInfo);
-            const auto* fieldType = TryGetFieldType(fieldInfo);
+            const auto* fieldName = il2cpp_field_get_name ? ValidateCString(il2cpp_field_get_name(fieldInfo)) : nullptr;
+            const auto* fieldType = il2cpp_field_get_type ? il2cpp_field_get_type(fieldInfo) : nullptr;
             const auto typeReadable = fieldType && IsReadablePointer(fieldType);
             const auto fieldTypeName = typeReadable ? GetTypeName(fieldType) : std::string("UnknownType");
             std::string fieldNameText = SafeString(fieldName, "");
@@ -783,12 +425,12 @@ namespace
             const auto fieldFlags = GetFieldFlags(fieldInfo);
             const auto offsetData = *reinterpret_cast<const uint32_t*>(field + 0x18);
             auto fieldOffset = (offsetData & 0xFFFFFFu) ^ kFieldValueApiOffsetXor;
-            const auto apiOffset = TryGetFieldOffset(fieldInfo);
+            const auto apiOffset = il2cpp_field_get_offset ? il2cpp_field_get_offset(fieldInfo) : 0;
             auto sizeAndAlignment = SizeAndAlignment{ static_cast<uint32_t>(sizeof(void*)), static_cast<uint32_t>(sizeof(void*)) };
             auto typeKind = -1;
             if (typeReadable) {
                 sizeAndAlignment = GetTypeSizeAndAlignment(fieldType);
-                typeKind = TryGetTypeKind(fieldType);
+                typeKind = il2cpp_type_get_type ? il2cpp_type_get_type(fieldType) : -1;
             }
 
             DebugPrintA("[DumpCs2] 字段 offset: klass=%p class=%s index=%u field=%p name=%s type=%s typePtr=%p typeName=%s typeReadable=%d flags=0x%X finalOffset=0x%X apiOffset=0x%llX rawOffset=%08X rawNameToken=%016llX decodedNameToken=%016llX typeKind=0x%X size=%u align=%u\n", klass, className.c_str(), i, reinterpret_cast<const void*>(field), fieldNameText.c_str(), fieldTypeName.c_str(), fieldType, fieldTypeName.c_str(), typeReadable ? 1 : 0, fieldFlags, fieldOffset, static_cast<unsigned long long>(apiOffset), offsetData, static_cast<unsigned long long>(rawNameToken), static_cast<unsigned long long>(decodedNameToken), typeKind, sizeAndAlignment.size, sizeAndAlignment.alignment);
@@ -812,15 +454,15 @@ namespace
         size_t methodIndex = 0;
         void* iter = nullptr;
         while (methodIndex++ < kMaxMemberCount) {
-            const auto* method = TryGetNextMethod(klass, &iter);
+            const auto* method = il2cpp_class_get_methods(const_cast<Il2CppClass*>(klass), &iter);
             if (!method) {
                 break;
             }
 
             const auto flags = GetMethodFlags(method);
             const auto methodPointer = GetMethodPointer(method);
-            const auto paramCount = TryGetMethodParamCount(method);
-            const auto methodName = SafeString(TryGetMethodName(method), "unknownMethod");
+            const auto paramCount = il2cpp_method_get_param_count ? il2cpp_method_get_param_count(method) : 0;
+            const auto methodName = SafeString(il2cpp_method_get_name ? ValidateCString(il2cpp_method_get_name(method)) : nullptr, "unknownMethod");
             os << "\t[Flags: " << ToBinary32(flags) << "] [ParamsCount: " << paramCount << "]";
             if (methodPointer) {
                 os << " |RVA: 0x" << std::uppercase << std::hex << GetRva(methodPointer) << std::nouppercase << std::dec << "|";
@@ -831,11 +473,11 @@ namespace
                 os << "static ";
             }
 
-            const auto* returnType = TryGetMethodReturnType(method);
+            const auto* returnType = il2cpp_method_get_return_type ? il2cpp_method_get_return_type(method) : nullptr;
             os << GetTypeName(returnType, "void") << " " << methodName << "(";
 
             for (uint32_t i = 0; i < paramCount; ++i) {
-                const auto* paramType = TryGetMethodParam(method, i);
+                const auto* paramType = il2cpp_method_get_param ? il2cpp_method_get_param(method, i) : nullptr;
                 os << GetParamModifier(paramType) << GetTypeName(paramType) << " " << GetParamName(method, i);
                 if (i + 1 < paramCount) {
                     os << ", ";
@@ -869,10 +511,10 @@ namespace
 
         os << "\n";
 
-        if (TryIsClassEnum(klass)) {
+        if (il2cpp_class_is_enum && il2cpp_class_is_enum(klass)) {
             os << "enum ";
         }
-        else if (TryIsClassValueType(klass)) {
+        else if (il2cpp_class_is_valuetype && il2cpp_class_is_valuetype(klass)) {
             os << "struct ";
         }
 
@@ -891,7 +533,7 @@ namespace
                 size_t interfaceIndex = 0;
                 void* iter = nullptr;
                 while (interfaceIndex++ < kMaxMemberCount) {
-                    const auto* interfaceClass = TryGetNextInterface(klass, &iter);
+                    const auto* interfaceClass = il2cpp_class_get_interfaces(const_cast<Il2CppClass*>(klass), &iter);
                     if (!interfaceClass) {
                         break;
                     }
@@ -956,7 +598,7 @@ namespace
 
         for (size_t i = 0; i < classCount; ++i) {
             DebugPrintA("[DumpCs2] Image class index: %s[%zu/%zu]\n", imageName.c_str(), i, classCount);
-            DumpClass(os, image, TryGetImageClass(image, i));
+            DumpClass(os, image, il2cpp_image_get_class(image, i));
         }
     }
 

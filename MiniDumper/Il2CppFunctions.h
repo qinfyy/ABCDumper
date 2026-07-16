@@ -8,12 +8,36 @@
 #include <utility>
 
 #include "il2cpp/il2cpp-api-types.h"
+#include "PrintHelper.h"
 
 uintptr_t GetGameAssemblyModuleBase();
 
 inline std::unordered_map<std::string, void*> g_il2CppAddresses{};
 
+inline constexpr bool kEnableIl2CppApiSeh = true;
+
 void* FindIl2CppAddress(const std::string& funcName);
+
+template <typename Return, typename... Args>
+auto InvokeIl2CppApiWithSeh(const char* funcName, void* address, Args... args) -> Return
+{
+    auto* fn = reinterpret_cast<Return(*)(Args...)>(address);
+
+    __try {
+        if constexpr (std::is_void_v<Return>) {
+            fn(std::forward<Args>(args)...);
+        }
+        else {
+            return fn(std::forward<Args>(args)...);
+        }
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER) {
+        DebugPrintA("[IL2CPP] il2cpp api seh 异常: name=%s address=%p code=0x%08lX\n", funcName, address, GetExceptionCode());
+        if constexpr (!std::is_void_v<Return>) {
+            return Return{};
+        }
+    }
+}
 
 template <typename Return, typename... Args>
 auto InvokeIl2CppApi(const std::string& funcName, Args... args) -> Return
@@ -23,13 +47,17 @@ auto InvokeIl2CppApi(const std::string& funcName, Args... args) -> Return
         throw std::runtime_error("IL2CPP Function 未绑定: " + funcName);
     }
 
-    auto* fn = reinterpret_cast<Return(*)(Args...)>(address);
-
-    if constexpr (std::is_void_v<Return>) {
-        fn(std::forward<Args>(args)...);
+    if constexpr (kEnableIl2CppApiSeh) {
+        return InvokeIl2CppApiWithSeh<Return, Args...>(funcName.c_str(), address, std::forward<Args>(args)...);
     }
     else {
-        return fn(std::forward<Args>(args)...);
+        auto* fn = reinterpret_cast<Return(*)(Args...)>(address);
+        if constexpr (std::is_void_v<Return>) {
+            fn(std::forward<Args>(args)...);
+        }
+        else {
+            return fn(std::forward<Args>(args)...);
+        }
     }
 }
 
