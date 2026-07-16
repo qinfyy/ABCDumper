@@ -15,20 +15,33 @@ uintptr_t GetGameAssemblyModuleBase();
 inline std::unordered_map<std::string, void*> g_il2CppAddresses{};
 
 inline constexpr bool kEnableIl2CppApiSeh = true;
+inline constexpr bool ThrowIl2CppApiSehCppException = false;
 
 void* FindIl2CppAddress(const std::string& funcName);
 
 template <typename Return, typename... Args>
-auto InvokeIl2CppApiWithSeh(const char* funcName, void* address, Args... args) -> Return
+auto InvokeIl2CppApiWithSeh(const char* funcName, void* address, bool* success, Args... args) -> Return
 {
     auto* fn = reinterpret_cast<Return(*)(Args...)>(address);
+
+    if (success) {
+        *success = false;
+    }
 
     __try {
         if constexpr (std::is_void_v<Return>) {
             fn(std::forward<Args>(args)...);
         }
         else {
-            return fn(std::forward<Args>(args)...);
+            const auto result = fn(std::forward<Args>(args)...);
+            if (success) {
+                *success = true;
+            }
+            return result;
+        }
+
+        if (success) {
+            *success = true;
         }
     }
     __except (EXCEPTION_EXECUTE_HANDLER) {
@@ -47,15 +60,37 @@ auto InvokeIl2CppApi(const std::string& funcName, Args... args) -> Return
         throw std::runtime_error("IL2CPP Function 未绑定: " + funcName);
     }
 
-    if constexpr (kEnableIl2CppApiSeh) {
-        return InvokeIl2CppApiWithSeh<Return, Args...>(funcName.c_str(), address, std::forward<Args>(args)...);
-    }
-    else {
-        auto* fn = reinterpret_cast<Return(*)(Args...)>(address);
-        if constexpr (std::is_void_v<Return>) {
-            fn(std::forward<Args>(args)...);
+    if constexpr (std::is_void_v<Return>) {
+        if constexpr (kEnableIl2CppApiSeh) {
+            bool success = false;
+            InvokeIl2CppApiWithSeh<Return, Args...>(funcName.c_str(), address, &success, std::forward<Args>(args)...);
+            if (!success) {
+                if constexpr (ThrowIl2CppApiSehCppException) {
+                    throw std::runtime_error(std::string("IL2CPP API SEH: ") + funcName);
+                }
+            }
         }
         else {
+            auto* fn = reinterpret_cast<Return(*)(Args...)>(address);
+            fn(std::forward<Args>(args)...);
+        }
+    }
+    else {
+        if constexpr (kEnableIl2CppApiSeh) {
+            bool success = false;
+            const auto result = InvokeIl2CppApiWithSeh<Return, Args...>(funcName.c_str(), address, &success, std::forward<Args>(args)...);
+            if (!success) {
+                if constexpr (ThrowIl2CppApiSehCppException) {
+                    throw std::runtime_error(std::string("IL2CPP API SEH: ") + funcName);
+                }
+
+                return Return{};
+            }
+
+            return result;
+        }
+        else {
+            auto* fn = reinterpret_cast<Return(*)(Args...)>(address);
             return fn(std::forward<Args>(args)...);
         }
     }
