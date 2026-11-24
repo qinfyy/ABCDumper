@@ -76,7 +76,7 @@ class ProtoDumpSession {
     constructor(private readonly catalog: ProtocolCatalog, private readonly options: ProtoDumpOptions) {
         this.batchSize = options.batchSize ?? 8;
         if (!Number.isInteger(this.batchSize) || this.batchSize <= 0) throw new Error("Invalid protobuf batchSize");
-        const filename = options.image === undefined && options.match === undefined && options.count === undefined ? "hna-all.proto" : "probe.proto";
+        const filename = options.image === undefined && options.match === undefined && options.count === undefined ? "dump.proto" : "probe.proto";
         const output = options.output ?? target.path.replace(/[^\\/]+$/, "") + "RuntimeDump\\" + filename;
         this.result = { output, total: 0, messages: 0, enums: 0, fields: 0,
             mergeFrom: 0, writeTo: 0, incomplete: 0, failed: 0, cancelled: false, finished: false };

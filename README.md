@@ -1,6 +1,6 @@
-# ProtoDumper
+# ABCDumper
 
-目标为 **NexusAnima / ABC_CN_Windows_0.75.2 / Windows x64**。
+目标为 **CNCBWindows0.75.2**。
 
 ```powershell
 npm install
@@ -20,6 +20,6 @@ abc.gpb.dump()
 abc.cmdid.dump()
 ```
 
-默认导出 `gpbConstant.images` 中的程序集至 `RuntimeDump/hna-all.proto`；`allImages: true` 扫描全部已加载程序集。消息和枚举各自按程序集分组。局部导出默认写入 `RuntimeDump/probe.proto`，可能需要其他类型定义。未恢复的字段保留为 `UNRESOLVED`。手动 `abc.dump()` 仍是 C# 转储入口。
+默认导出 `gpbConstant.images` 中的程序集至 `RuntimeDump/dump.proto`；`allImages: true` 扫描全部已加载程序集。消息和枚举各自按程序集分组。局部导出默认写入 `RuntimeDump/probe.proto`，可能需要其他类型定义。未恢复的字段保留为 `UNRESOLVED`。手动 `abc.dump()` 是 C# 转储入口。
 
 客户端初始化网络消息注册表后，`abc.cmdid.dump()` 导出全部已注册的网络消息至 `RuntimeDump/CmdIds.txt`；单独加载 `dist/cmdid-agent.js` 也可以直接导出。
