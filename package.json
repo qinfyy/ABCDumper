@@ -1,0 +1,17 @@
+{
+    "name": "ABCDumper",
+    "version": "1.0.0",
+    "description": "CNCBWindows0.75.2 IL2CPP metadata agent",
+    "license": "ISC",
+    "author": "",
+    "type": "commonjs",
+    "main": "agents.js",
+    "scripts": {
+        "build": "node build.js"
+    },
+    "devDependencies": {
+        "@types/frida-gum": "^19.13.0",
+        "frida-compile": "^16.4.2",
+        "typescript": "^5.9.3"
+    }
+}
