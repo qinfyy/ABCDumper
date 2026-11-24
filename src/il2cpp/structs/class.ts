@@ -1,6 +1,5 @@
 import { api } from "../api.js";
 import { Il2CppTypeEnum, TYPE_ATTRIBUTE_INTERFACE } from "../constant.js";
-import { classFullName } from "../metadata.js";
 import { NativeStruct } from "../memory.js";
 import { Il2CppField } from "./field.js";
 import { Il2CppImage } from "./image.js";
@@ -21,7 +20,7 @@ export interface MethodQuery {
 export class Il2CppClass extends NativeStruct {
     get name(): string { return api.il2cpp_class_get_name(this.handle); }
     get namespace(): string { return api.il2cpp_class_get_namespace(this.handle); }
-    get fullName(): string { return classFullName(this.handle); }
+    get fullName(): string { return this.resolveFullName(0); }
     get image(): Il2CppImage { return new Il2CppImage(api.il2cpp_class_get_image(this.handle)); }
     get definition(): NativePointer { return this.handle.add(0x10).readPointer(); }
     get type(): Il2CppType { return new Il2CppType(api.il2cpp_class_get_type(this.handle)); }
@@ -50,6 +49,15 @@ export class Il2CppClass extends NativeStruct {
         const handle = this.handle.add(0x38).readPointer();
         return handle.isNull() ? null : new Il2CppClass(handle);
     }
+
+    private resolveFullName(depth: number): string {
+        if (depth > 32) throw new Error("Invalid declaring class chain");
+        const name = this.name, outer = this.declaringClass;
+        if (outer) return outer.resolveFullName(depth + 1) + "." + name;
+        const namespace = this.namespace;
+        return namespace ? namespace + "." + name : name;
+    }
+
     get interfaces(): Il2CppType[] {
         const iterator = Memory.alloc(8).writePointer(NULL), result: Il2CppType[] = [];
         for (let handle = api["il2cpp_class_get_interfaces"](this.handle, iterator); !handle.isNull();

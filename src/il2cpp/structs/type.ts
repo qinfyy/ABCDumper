@@ -1,9 +1,8 @@
 import { api } from "../api.js";
 import { Il2CppTypeBits, Il2CppTypeEnum } from "../constant.js";
-import { classFullName, genericInstance } from "../metadata.js";
 import { NativeStruct, pointer, read64 } from "../memory.js";
 import { Il2CppClass } from "./class.js";
-import { Il2CppArrayType } from "./generic.js";
+import { Il2CppArrayType, Il2CppGenericClass } from "./generic.js";
 import { Il2CppObject } from "./object.js";
 
 const primitiveNames: Record<number, string> = {
@@ -50,7 +49,7 @@ export class Il2CppType extends NativeStruct {
         throw new Error("Type has no array/pointer element: " + this.name);
     }
     get genericArguments(): Il2CppType[] {
-        return this.tag === Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST ? genericInstance(pointer(this.data)).arguments.map(handle => new Il2CppType(handle)) : [];
+        return this.tag === Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST ? new Il2CppGenericClass(pointer(this.data)).instance.arguments : [];
     }
     get storageSize(): number {
         if (this.isByReference) throw new Error("By-reference storage is not supported: " + this.name);
@@ -76,25 +75,26 @@ export class Il2CppType extends NativeStruct {
         if (depth > 32) return "<recursive-type>";
         const data = this.data;
         const tag = this.tag;
-        const nested = (p: NativePointer): string => new Il2CppType(p).resolveName(depth + 1);
+        const nested = (type: Il2CppType): string => type.resolveName(depth + 1);
         let name = primitiveNames[tag];
         switch (tag) {
             case Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE:
             case Il2CppTypeEnum.IL2CPP_TYPE_CLASS:
-                name = classFullName(this.klass.handle);
+                name = this.klass.fullName;
                 break;
             case Il2CppTypeEnum.IL2CPP_TYPE_PTR:
             case Il2CppTypeEnum.IL2CPP_TYPE_SZARRAY:
-                name = nested(pointer(data)) + (tag === Il2CppTypeEnum.IL2CPP_TYPE_PTR ? "*" : "[]");
+                name = nested(new Il2CppType(pointer(data))) + (tag === Il2CppTypeEnum.IL2CPP_TYPE_PTR ? "*" : "[]");
                 break;
             case Il2CppTypeEnum.IL2CPP_TYPE_ARRAY: {
                 const array = new Il2CppArrayType(pointer(data));
-                name = nested(array.elementType.handle) + "[" + ",".repeat(Math.max(0, array.rank - 1)) + "]";
+                name = nested(array.elementType) + "[" + ",".repeat(Math.max(0, array.rank - 1)) + "]";
                 break;
             }
             case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST: {
-                const instance = genericInstance(pointer(data));
-                name = instance.name + "<" + instance.arguments.map(nested).join(", ") + ">";
+                const generic = new Il2CppGenericClass(pointer(data));
+                const definition = generic.definition.klass.fullName.replace(/`\d+$/, "");
+                name = definition + "<" + generic.instance.arguments.map(nested).join(", ") + ">";
                 break;
             }
             case Il2CppTypeEnum.IL2CPP_TYPE_VAR:

@@ -23,11 +23,11 @@ export function assemblies() {
 }
 
 export function images(): Il2CppImage[] {
-    return Il2CppDomain.current.assemblies.map(assembly => assembly.image);
+    return Il2CppDomain.current.images;
 }
 
 export function selectImage(name = "ABC.Common.dll"): Il2CppImage {
-    const image = images().find(image => image.name === name);
+    const image = Il2CppDomain.current.findImage(name);
     if (!image) throw new Error("Image not found: " + name);
     return image;
 }
@@ -39,21 +39,15 @@ export function resolveClass(selector: ClassSelector | string): Il2CppClass {
     const image = selectImage(options.image);
     const wanted = options.name ?? options.className;
     if (!wanted) throw new Error("Provide klass, index or class name");
-    const short = wanted.slice(wanted.lastIndexOf(".") + 1);
-    for (let i = 0; i < image.typeCount; i++) {
-        const klass = image.classAt(i);
-        if (klass.name === wanted || klass.name === short && klass.fullName === wanted) return klass;
-    }
-    throw new Error("Class not found: " + wanted);
+    const klass = image.findClass(wanted);
+    if (!klass) throw new Error("Class not found: " + wanted);
+    return klass;
 }
 
 export function classes(options: ClassQuery = {}) {
     const image = selectImage(options.image);
-    const offset = options.offset ?? 0;
-    const end = Math.min(image.typeCount, offset + (options.count ?? 20));
     const result = [];
-    for (let i = offset; i < end; i++) {
-        const klass = image.classAt(i);
+    for (const [i, klass] of image.classEntries(options.offset ?? 0, options.count ?? 20)) {
         if (!options.match || klass.fullName.includes(options.match)) result.push(klass.summary(image.typeStart + i));
     }
     return result;

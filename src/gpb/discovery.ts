@@ -15,9 +15,9 @@ export class ProtocolCatalog {
         const selected = options.image !== undefined ? [selectImage(options.image)] :
             options.allImages ? images() : gpbConstant.images.map(selectImage);
         for (const image of selected) {
-            const end = image.typeCount, start = image.typeStart;
-            for (let index = options.offset ?? 0; index < end; index++) {
-                const type = new ProtoMessageType(image.classAt(index).handle, start + index);
+            const start = image.typeStart;
+            for (const [index, klass] of image.classEntries(options.offset ?? 0)) {
+                const type = new ProtoMessageType(klass.handle, start + index);
                 if (options.match && !type.fullName.includes(options.match) || !type.isMessage) continue;
                 if (options.interface && !type.interfaces.some(type => type.name === options.interface)) continue;
                 result.push(type);

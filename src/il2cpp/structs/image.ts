@@ -7,13 +7,22 @@ export class Il2CppImage extends NativeStruct {
     get typeStart(): number { return this.handle.add(0x10).readPointer().readS32(); }
     get typeCount(): number { return api.il2cpp_image_get_class_count(this.handle); }
 
-    classHandle(index: number): NativePointer {
-        return api["il2cpp_image_get_class"](this.handle, index);
-    }
-
     classAt(index: number): Il2CppClass {
         if (!Number.isInteger(index) || index < 0 || index >= this.typeCount) throw new Error("Image class index out of bounds: " + index);
-        return new Il2CppClass(this.classHandle(index));
+        return new Il2CppClass(api["il2cpp_image_get_class"](this.handle, index));
+    }
+
+    *classEntries(offset = 0, count = this.typeCount - offset): Generator<[number, Il2CppClass]> {
+        const end = Math.min(this.typeCount, offset + count);
+        for (let i = offset; i < end; i++) yield [i, this.classAt(i)];
+    }
+
+    findClass(name: string): Il2CppClass | undefined {
+        const short = name.slice(name.lastIndexOf(".") + 1);
+        for (const [, klass] of this.classEntries()) {
+            const candidate = klass.name;
+            if (candidate === name || candidate === short && klass.fullName === name) return klass;
+        }
     }
 
     summary() {

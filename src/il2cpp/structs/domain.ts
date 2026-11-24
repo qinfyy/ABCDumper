@@ -1,6 +1,7 @@
 import { api } from "../api.js";
 import { NativeStruct } from "../memory.js";
 import { Il2CppAssembly } from "./assembly.js";
+import { Il2CppImage } from "./image.js";
 
 export { Il2CppAssembly } from "./assembly.js";
 
@@ -14,5 +15,11 @@ export class Il2CppDomain extends NativeStruct {
         const count = size.readU64().toNumber();
         if (count <= 0 || count > 4096 || first.isNull()) throw new Error("Invalid IL2CPP assembly table");
         return Array.from({ length: count }, (_, i) => new Il2CppAssembly(first.add(i * 8).readPointer()));
+    }
+
+    get images(): Il2CppImage[] { return this.assemblies.map(assembly => assembly.image); }
+
+    findImage(name: string): Il2CppImage | undefined {
+        return this.images.find(image => image.name === name);
     }
 }
