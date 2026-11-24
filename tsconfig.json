@@ -10,5 +10,5 @@
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true
     },
-    "include": ["src/index.ts", "src/query.ts"]
+    "include": ["src/index.ts", "src/query.ts", "src/cmdid/agent.ts"]
 }

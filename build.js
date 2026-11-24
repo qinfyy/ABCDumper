@@ -8,7 +8,8 @@ fs.mkdirSync(outDir, { recursive: true });
 
 const agents = [
     ['src/index.ts', 'agent.js'],
-    ['src/query.ts', 'query-agent.js']
+    ['src/query.ts', 'query-agent.js'],
+    ['src/cmdid/agent.ts', 'cmdid-agent.js']
 ];
 
 for (const [entry, output] of agents) {

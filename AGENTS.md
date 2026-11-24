@@ -1,32 +1,32 @@
 # Repository Guidelines
 
-本文件适用于整个仓库。回复和新增文档使用中文；修改前阅读相关模块，保留用户已有改动。当前目标为 **CN 7.2.50 / Windows x64 / IL2CPP**。
+本文件适用于整个仓库。回复和新增文档使用中文；修改前阅读相关模块，保留用户已有改动。当前目标为 **ABC_CN_Windows_0.75.2 / Windows x64 / IL2CPP**。
 
 ## 1. 环境与构建
 
 - agent 使用 TypeScript、Frida Gum，依赖为 `@types/frida-gum`、`typescript` 和 `frida-compile`。
 - `tsconfig.json` 是 TypeScript 配置依据：ES2022、ESNext、Bundler、strict。不要通过关闭 strict 或滥用 `any` 绕过类型问题。
 - `npm install` 安装依赖，`npm run build` 通过 `build.js` 编译三个入口到 `dist`；不要直接编辑生成的 JS。
-- `agent.js` 自动导出 proto 后导出 CmdId；`query-agent.js` 只安装查询接口；`cmdid-agent.js` 仅自动导出 CmdId。
+- `agent.js` 和 `query-agent.js` 只安装 `abc` 和 RPC 接口；`cmdid-agent.js` 安装同样的接口并自动导出 CmdId。
 
 ## 2. 目录与职责
 
 | 路径 | 职责 |
 | --- | --- |
 | `src/index.ts`、`src/query.ts`、`src/cmdid/agent.ts` | agent 入口与导出调度 |
-| `src/agent.ts` | `ys` 和 RPC 接口，线程作用域包装 |
+| `src/agent.ts` | `abc` 和 RPC 接口，线程作用域包装 |
 | `src/il2cpp` | 原生 API、指针解码、元数据、线程、调用与对象生命周期 |
 | `src/il2cpp/structs` | Class、Type、Field、Method、Image 等运行时结构 |
 | `src/gpb` | 消息发现、MergeFrom/WriteTo 恢复、集合、oneof、enum |
-| `src/cmdid` | 注册关系与常量 getter 恢复，独立导出 CmdId |
+| `src/cmdid` | 读取网络消息注册表，独立导出 CmdId |
 | `src/renderers` | C# 和 protobuf 文本渲染，不放原生扫描逻辑 |
 | `src/dumper.ts`、`src/io` | C# 批量转储、输出目录和文件读写 |
 | `docs` | 版本分析、符号与结构恢复依据 |
 
 ## 3. 分层与运行时约束
 
-- 入口只调度，不放字段恢复、元数据解码或注册表解析。protobuf 与 CmdId 保持独立；CmdId 写 `CmdIds.txt`，采用 `消息名 = 命令号` 和 `; dump method: ... | RVA: ...` 行尾注释，registry 追加 `| Index: ...`（各注册表原始序号，从 0 开始），getter 不追加序号，不输出 namespace 注释，不修改 schema。
-- C# 自动导出块保持注释，它是明确保留的关闭开关，不作为死代码清理；手动 `ys.dump()` 接口仍须可用。
+- 入口只调度，不放字段恢复、元数据解码或注册表解析。protobuf 与 CmdId 保持独立；CmdId 写 `CmdIds.txt`，采用 `消息名 = 命令号` 和 `; dump method: ... | RVA: ... | Index: ...` 行尾注释，Index 为注册表原始下标，从 0 开始，不输出 namespace 注释，不修改 schema。
+- C# 自动导出块保持注释，它是明确保留的关闭开关，不作为死代码清理；手动 `abc.dump()` 接口仍须可用。
 - 原生地址集中在 `src/il2cpp/addresses.ts`，GPB 与 CmdId 的版本锚点分别放 `src/gpb/constant.ts` 和 `src/cmdid/constant.ts`；结构偏移留在对应结构封装。不要恢复 `api-profile.json` 或混合不同版本的布局。
 - libil2cpp 的类型枚举、属性标志和通用位域掩码集中在 `src/il2cpp/constant.ts`，全仓引用具名常量，不直接使用类型编号或属性掩码。头文件已有名称沿用原名；从位域推导的掩码注明结构与依据，不与游戏专属标志、布局偏移或解码密钥混淆。
 - 结构、偏移、密钥与函数语义的改动必须有原生或运行时依据，注释写明版本、相关符号或 RVA。DummyDll 方法体是占位，不能据此判断原生行为，也不能照搬标准 IL2CPP 布局。
@@ -35,8 +35,8 @@
 - 字段是否 static/literal 看属性 flags，不看 offset 的 storageTag；方法入口、invoker 和 MethodInfo 不可混用。
 - 消息识别结合基类及自身泛型接口，不能只匹配混淆名或 getter/setter。自动模式 WriteTo 优先，缺失或恢复不完整时使用 MergeFrom 补充；不能要求每个消息同时具有两个有效方法。
 - 继承空壳或声明的 ret 方法不参与字段恢复；声明空方法保留 RVA，缺失方法显示 `-`。oneof 按真实 case、存储与 wire tag 配对，不按声明顺序猜测。
-- CmdId 以注册关系优先、非零常量 getter 补充，按消息名保留同号记录；缺失 getter 不等于数值冲突。
-- 保持既有 `ys`、RPC 名称和调用方式，`invoke` 保留位置参数接口。删除成员前用 `rg` 核对入口、RPC 和字符串调用，不仅看静态引用。
+- CmdId 只读客户端已初始化的网络消息注册表，未初始化时报告未就绪，不主动执行游戏初始化逻辑。
+- 全局接口为 `abc`，RPC 名称和调用方式保持不变，`invoke` 保留位置参数接口。删除成员前用 `rg` 核对入口、RPC 和字符串调用，不仅看静态引用。
 
 ## 4. 代码风格与精简
 

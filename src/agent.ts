@@ -1,3 +1,4 @@
+import { cmdid } from "./cmdid/index.js";
 import { addresses, base } from "./il2cpp/addresses.js";
 import { api } from "./il2cpp/api.js";
 import { assemblies, classes, ClassQuery, ClassSelector, resolveClass } from "./il2cpp/core.js";
@@ -8,8 +9,8 @@ import { withThread } from "./il2cpp/thread.js";
 import { cancelDump, dump, dumpStatus, waitDump } from "./dumper.js";
 import { gpb } from "./gpb/index.js";
 
-export const ys = {
-    api, addresses, base, withThread, gpb,
+export const abc = {
+    api, addresses, base, withThread, gpb, cmdid,
     assemblies: () => withThread(assemblies),
     classes: (options?: ClassQuery) => withThread(() => classes(options)),
     findClass: (options: ClassSelector | string) => withThread(() => resolveClass(options).toString()),
@@ -25,11 +26,12 @@ export const ys = {
 };
 
 export function installAgent(): void {
-    (globalThis as typeof globalThis & { ys: typeof ys }).ys = ys;
+    (globalThis as typeof globalThis & { abc: typeof abc }).abc = abc;
     rpc.exports = {
-        context: ys.context, assemblies: ys.assemblies, classes: ys.classes, findclass: ys.findClass,
-        inspect: ys.inspect, invoke: ys.invoke, dump, waitdump: waitDump, canceldump: cancelDump, dumpstatus: dumpStatus,
+        context: abc.context, assemblies: abc.assemblies, classes: abc.classes, findclass: abc.findClass,
+        inspect: abc.inspect, invoke: abc.invoke, dump, waitdump: waitDump, canceldump: cancelDump, dumpstatus: dumpStatus,
         gpbclasses: gpb.classes, gpbinspect: gpb.inspect, gpbprobe: gpb.probe,
-        dumpproto: gpb.dump, protostatus: gpb.status, cancelproto: gpb.cancel, waitproto: gpb.wait
+        dumpproto: gpb.dump, protostatus: gpb.status, cancelproto: gpb.cancel, waitproto: gpb.wait,
+        dumpcmdid: cmdid.dump, cmdidprobe: cmdid.probe, cmdidregistries: cmdid.registries
     };
 }

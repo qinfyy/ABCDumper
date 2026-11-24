@@ -1,7 +1,7 @@
-import { installAgent, ys } from "../agent.js";
+import { abc, installAgent } from "../agent.js";
 
 installAgent();
 setImmediate(() => {
-    try { ys.cmdid.dump(); }
+    try { abc.cmdid.dump(); }
     catch (error) { send({ event: "cmdid-error", error: String(error) }); }
 });
