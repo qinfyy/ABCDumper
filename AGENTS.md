@@ -7,7 +7,7 @@
 - agent 使用 TypeScript、Frida Gum，依赖为 `@types/frida-gum`、`typescript` 和 `frida-compile`。
 - `tsconfig.json` 是 TypeScript 配置依据：ES2022、ESNext、Bundler、strict。不要通过关闭 strict 或滥用 `any` 绕过类型问题。
 - `npm install` 安装依赖，`npm run build` 通过 `build.js` 编译三个入口到 `dist`；不要直接编辑生成的 JS。
-- `agent.js` 和 `query-agent.js` 只安装 `abc` 和 RPC 接口；`cmdid-agent.js` 安装同样的接口并自动导出 CmdId。
+- `agent.js` 安装 `abc` 和 RPC 接口并自动导出 protobuf，成功后导出 CmdId；`query-agent.js` 只安装接口；`cmdid-agent.js` 只自动导出 CmdId。
 
 ## 2. 目录与职责
 

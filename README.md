@@ -8,7 +8,7 @@ npx tsc --noEmit
 npm run build
 ```
 
-在已连接且 IL2CPP 已初始化的测试会话中加载 `dist/query-agent.js`。主入口 `dist/agent.js` 同样提供 `abc` 和 RPC，不会自动开始导出。
+在已连接且 IL2CPP 已初始化的测试会话中，加载 `dist/agent.js` 会自动导出 protobuf，成功后再导出 CmdId。手动查询或导出时加载 `dist/query-agent.js`，它只安装 `abc` 和 RPC 接口。
 
 ```javascript
 abc.assemblies()
